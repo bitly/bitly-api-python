@@ -3,7 +3,7 @@ bit.ly API python library
 
 Installation
 
-pip install -e git+git://github.com/bitly/bitly-api-python.git
+pip install -e git://github.com/bitly/bitly-api-python.git#egg=bitly_api
 
 API Documentation
 =================
