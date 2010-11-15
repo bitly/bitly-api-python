@@ -104,6 +104,42 @@ class Connection(object):
         data = self._call(self.host, 'v3/clicks', params, self.secret)
         return data['data']['clicks']
     
+    def clicks_by_day(self, hash=None, shortUrl=None):
+        """ given a bit.ly url or hash, get a time series of clicks
+        per day for the last 30 days in reverse chronological order
+        (most recent to least recent) """
+        if not hash and not shortUrl:
+            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+        params = {
+            'login' : self.login,
+            'apiKey' : self.api_key
+        }
+        if hash:
+            params['hash'] = hash
+        if shortUrl:
+            params['shortUrl'] = shortUrl
+
+        data = self._call(self.host, 'v3/clicks_by_day', params, self.secret)
+        return data['data']['clicks_by_day']
+    
+    def clicks_by_minute(self, hash=None, shortUrl=None):
+        """ given a bit.ly url or hash, get a time series of clicks
+        per minute for the last 30 minutes in reverse chronological
+        order (most recent to least recent)"""
+        if not hash and not shortUrl:
+            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+        params = {
+            'login' : self.login,
+            'apiKey' : self.api_key
+        }
+        if hash:
+            params['hash'] = hash
+        if shortUrl:
+            params['shortUrl'] = shortUrl
+
+        data = self._call(self.host, 'v3/clicks_by_minute', params, self.secret)
+        return data['data']['clicks_by_minute']
+    
     def lookup(self, url):
         """ query for a bit.ly link based on a long url """
         params = {
