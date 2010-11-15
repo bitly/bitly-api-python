@@ -70,7 +70,7 @@ class Connection(object):
         return data['data']
     
     def expand(self, hash=None, shortUrl=None):
-        """ lookup a hash/keyword/shortUrl and get the current clicks
+        """ given a bit.ly url or hash, decode it and return the target url
         @parameter hash: one or more bit.ly hashes
         @parameter shortUrl: one or more bit.ly short urls
         """
@@ -89,7 +89,7 @@ class Connection(object):
         return data['data']['expand']
 
     def clicks(self, hash=None, shortUrl=None):
-        """ lookup a hash/keyword and get the long url """
+        """ given a bit.ly url or hash, get statistics about the clicks on that link """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = {
@@ -105,7 +105,7 @@ class Connection(object):
         return data['data']['clicks']
     
     def lookup(self, url):
-        """ query for a bit.ly link based on a long URL """
+        """ query for a bit.ly link based on a long url """
         params = {
             'url' : url,
             'login' : self.login,
