@@ -104,6 +104,17 @@ class Connection(object):
         data = self._call(self.host, 'v3/clicks', params, self.secret)
         return data['data']['clicks']
     
+    def lookup(self, url):
+        """ query for a bit.ly link based on a long URL """
+        params = {
+            'url' : url,
+            'login' : self.login,
+            'apiKey' : self.api_key
+        }
+
+        data = self._call(self.host, 'v3/lookup', params, self.secret)
+        return data['data']['lookup']
+
     @classmethod
     def _generateSignature(self, params, secret):
         if not params or not secret:
