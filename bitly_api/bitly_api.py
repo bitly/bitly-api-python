@@ -139,6 +139,22 @@ class Connection(object):
 
         data = self._call(self.host, 'v3/clicks_by_minute', params, self.secret)
         return data['data']['clicks_by_minute']
+
+    def info(self, hash=None, shortUrl=None):
+        """ return the page title for a given bit.ly link """
+        if not hash and not shortUrl:
+            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+        params = {
+            'login' : self.login,
+            'apiKey' : self.api_key
+        }
+        if hash:
+            params['hash'] = hash
+        if shortUrl:
+            params['shortUrl'] = shortUrl
+
+        data = self._call(self.host, 'v3/info', params, self.secret)
+        return data['data']['info']
     
     def lookup(self, url):
         """ query for a bit.ly link based on a long url """
