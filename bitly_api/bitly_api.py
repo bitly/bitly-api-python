@@ -103,6 +103,22 @@ class Connection(object):
 
         data = self._call(self.host, 'v3/clicks', params, self.secret)
         return data['data']['clicks']
+
+    def referrers(self, hash=None, shortUrl=None):
+        """ given a bit.ly url or hash, get statistics about the referrers of that link """
+        if not hash and not shortUrl:
+            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+        params = {
+            'login' : self.login,
+            'apiKey' : self.api_key
+        }
+        if hash:
+            params['hash'] = hash
+        if shortUrl:
+            params['shortUrl'] = shortUrl
+
+        data = self._call(self.host, 'v3/referrers', params, self.secret)
+        return data['data']['referrers']
     
     def clicks_by_day(self, hash=None, shortUrl=None):
         """ given a bit.ly url or hash, get a time series of clicks
