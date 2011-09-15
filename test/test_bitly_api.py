@@ -20,3 +20,8 @@ def testExpand():
     assert len(data) == 1
     assert data[0]['error'] == 'NOT_FOUND'
     
+def testReferrer():
+    bitly = bitly_api.Connection('bitlyapidemo','R_0da49e0a9118ff35f52f629d2d71bf07')
+    data = bitly.referrers(hash='a')
+    assert data != None
+    assert len(data) > 1
