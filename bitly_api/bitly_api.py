@@ -183,6 +183,25 @@ class Connection(object):
         data = self._call(self.host, 'v3/lookup', params, self.secret)
         return data['data']['lookup']
 
+    def pro_domain(self, domain, format='json'):
+        """ is the domain assigned for bitly.pro? """
+        end_point = 'v3/bitly_pro_domain'
+
+        if not domain:
+            raise BitlyError(500, 'MISSING_ARG_DOMAIN')
+
+        protocol_prefix = ('http://', 'https://')
+        if domain.lower().startswith(protocol_prefix):
+            raise BitlyError(500, 'INVALID_BARE_DOMAIN')
+        params = {
+            'domain': domain,
+            'login' : self.login,
+            'apiKey' : self.api_key,
+            'format': format,
+        }
+        data = self._call(self.host, end_point, params, self.secret)
+        return data['data']['bitly_pro_domain']
+
     @classmethod
     def _generateSignature(self, params, secret):
         if not params or not secret:
