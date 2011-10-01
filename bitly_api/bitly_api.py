@@ -26,26 +26,18 @@ class Connection(object):
     Usage:
         import bitly_api
         c = bitly_api.Connection('bitlyapidemo','R_{{apikey}}')
+        # or to use oauth2 endpoints
+        c = bitly_api.Connection(access_token='...')
         c.shorten('http://www.google.com/')
     """
-    def __init__(self, login, api_key, secret=None, preferred_domain='bit.ly'):
-        self.host = 'api.bit.ly'
-        self.preferred_domain = preferred_domain # bit.ly or j.mp
+    def __init__(self, login=None, api_key=None, access_token=None, secret=None):
+        self.host = 'api.bitly.com'
         self.login = login
         self.api_key = api_key
+        self.access_token = access_token
         self.secret = secret
         (major, minor, micro, releaselevel, serial) = sys.version_info
         self.user_agent = "Python/%d.%d.%d bitly_api/%s" % (major, minor, micro, '?')
-    
-    def keyword(self, hash, keyword):
-        """ assign a keyword to a hash """
-        data = self._call(self.host, 'v3/keyword', {
-                'login':self.login,
-                'apiKey':self.api_key,
-                'hash':hash,
-                'keyword':keyword
-            }, self.secret)
-        return data['data']
     
     def shorten(self, uri, x_login=None, x_apiKey=None, preferred_domain=None):
         """ creates a bit.ly link for a given long url 
@@ -54,10 +46,7 @@ class Connection(object):
         @parameter x_apiKey: apiKey of a user to shorten on behalf of
         @parameter preferred_domain: bit.ly[default] or j.mp
         """
-        preferred_domain = preferred_domain or self.preferred_domain
         params = {
-            'login': self.login,
-            'apiKey': self.api_key,
             'uri':uri.encode('UTF-8')
         }
         if preferred_domain:
@@ -76,10 +65,7 @@ class Connection(object):
         """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -92,10 +78,7 @@ class Connection(object):
         """ given a bit.ly url or hash, get statistics about the clicks on that link """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -108,10 +91,7 @@ class Connection(object):
         """ given a bit.ly url or hash, get statistics about the referrers of that link """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -126,10 +106,7 @@ class Connection(object):
         (most recent to least recent) """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -144,10 +121,7 @@ class Connection(object):
         order (most recent to least recent)"""
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -160,10 +134,7 @@ class Connection(object):
         """ return the page title for a given bit.ly link """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -174,16 +145,12 @@ class Connection(object):
     
     def lookup(self, url):
         """ query for a bit.ly link based on a long url """
-        params = {
-            'url' : url,
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict(url=url)
 
         data = self._call(self.host, 'v3/lookup', params, self.secret)
         return data['data']['lookup']
 
-    def pro_domain(self, domain, format='json'):
+    def pro_domain(self, domain):
         """ is the domain assigned for bitly.pro? """
         end_point = 'v3/bitly_pro_domain'
 
@@ -193,12 +160,7 @@ class Connection(object):
         protocol_prefix = ('http://', 'https://')
         if domain.lower().startswith(protocol_prefix):
             raise BitlyError(500, 'INVALID_BARE_DOMAIN')
-        params = {
-            'domain': domain,
-            'login' : self.login,
-            'apiKey' : self.api_key,
-            'format': format,
-        }
+        params = dict(domain=domain)
         data = self._call(self.host, end_point, params, self.secret)
         return data['data']['bitly_pro_domain']
 
@@ -224,8 +186,16 @@ class Connection(object):
         return signature
     
     def _call(self, host, method, params, secret=None, timeout=2500):
-        # default to json
-        params['format']=params.get('format','json')
+        params['format'] = params.get('format', 'json') # default to json
+
+        if self.access_token:
+            scheme = 'https'
+            params['access_token'] = self.access_token
+        else:
+            scheme = 'http'
+            params['login'] = self.login
+            params['apiKey'] = self.api_key
+            
         
         if secret:
             params['signature'] = self._generateSignature(params, secret)
@@ -240,10 +210,11 @@ class Connection(object):
             encoded_params.append((k,v))
         params = dict(encoded_params)
         
-        request = "http://%(host)s/%(method)s?%(params)s" % {
-            'host':host,
-            'method':method,
-            'params':urllib.urlencode(params, doseq=1)
+        request = "%(scheme)s://%(host)s/%(method)s?%(params)s" % {
+            'scheme': scheme,
+            'host': host,
+            'method': method,
+            'params': urllib.urlencode(params, doseq=1)
             }
         try:
             http_response = bitly_http.get(request, timeout, user_agent = self.user_agent)
