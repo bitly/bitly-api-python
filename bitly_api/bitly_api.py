@@ -326,6 +326,6 @@ class Connection(object):
             return data
         except BitlyError:
             raise
-        except:
+        except Exception:
             raise BitlyError(None, sys.exc_info()[1])
 
