@@ -8,6 +8,7 @@ import sys
 import time
 import types
 import urllib
+import warnings
 
 class Error(Exception):
     pass
@@ -17,6 +18,11 @@ class BitlyError(Error):
         Error.__init__(self,message)
         self.code = code
 
+def _utf8(s):
+    if isinstance(s, unicode):
+        s = s.encode('utf-8')
+    assert isinstance(s, str)
+    return s
 
 class Connection(object):
     """
@@ -46,9 +52,7 @@ class Connection(object):
         @parameter x_apiKey: apiKey of a user to shorten on behalf of
         @parameter preferred_domain: bit.ly[default] or j.mp
         """
-        params = {
-            'uri':uri.encode('UTF-8')
-        }
+        params = dict(uri=uri)
         if preferred_domain:
             params['domain'] = preferred_domain
         if x_login:
@@ -76,6 +80,7 @@ class Connection(object):
 
     def clicks(self, hash=None, shortUrl=None):
         """ given a bit.ly url or hash, get statistics about the clicks on that link """
+        warnings.warn("/v3/clicks is depricated in favor of /v3/link/clicks", DeprecationWarning)
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
@@ -86,9 +91,11 @@ class Connection(object):
 
         data = self._call(self.host, 'v3/clicks', params, self.secret)
         return data['data']['clicks']
+    
 
     def referrers(self, hash=None, shortUrl=None):
         """ given a bit.ly url or hash, get statistics about the referrers of that link """
+        warnings.warn("/v3/referrers is depricated in favor of /v3/link/referrers", DeprecationWarning)
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
@@ -104,6 +111,7 @@ class Connection(object):
         """ given a bit.ly url or hash, get a time series of clicks
         per day for the last 30 days in reverse chronological order
         (most recent to least recent) """
+        warnings.warn("/v3/clicks_by_day is depricated in favor of /v3/link/clicks?unit=day", DeprecationWarning)
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
@@ -119,6 +127,7 @@ class Connection(object):
         """ given a bit.ly url or hash, get a time series of clicks
         per minute for the last 30 minutes in reverse chronological
         order (most recent to least recent)"""
+        warnings.warn("/v3/clicks_by_minute is depricated in favor of /v3/link/clicks?unit=minute", DeprecationWarning)
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
@@ -129,6 +138,47 @@ class Connection(object):
 
         data = self._call(self.host, 'v3/clicks_by_minute', params, self.secret)
         return data['data']['clicks_by_minute']
+
+    def link_clicks(self, link, **kwargs):
+        params = dict(link=link)
+        return self._call_oauth2_metrics("v3/link/clicks", params)
+
+    def link_referring_domains(self, link, **kwargs):
+        params = dict(link=link)
+        return self._call_oauth2_metrics("v3/link/referring_domains", params)
+
+    def link_referrers(self, link, **kwargs):
+        params = dict(link=link)
+        return self._call_oauth2_metrics("v3/link/referrers", params)
+
+    def link_countries(self, link, **kwargs):
+        params = dict(link=link)
+        return self._call_oauth2_metrics("v3/link/countries", params)
+    
+    def _call_oauth2_metrics(self, endpoint, params, unit=None, units=None, tz_offset=None, rollup=None, limit=None):
+        assert self.access_token, "This %s endpoint requires OAuth" % endpoint
+        if unit is not None:
+            assert unit in ("minute", "hour", "day", "week", "mweek", "month")
+            params["unit"] = unit
+        if units is not None:
+            assert isinstance(units, int), "Unit (%r) must be integer" % units
+            params["units"] = units
+        if tz_offset is not None:
+            # tz_offset can either be a hour offset, or a timezone like North_America/New_York
+            if isinstance(tz_offset, int):
+                assert -12 <= tz_offset <= 12, "integer tz_offset must be between -12 and 12"
+            else:
+                assert isinstance(tz_offset, (str, unicode))
+            params["tz_offset"] = tz_offset
+        if rollup is not None:
+            assert isinstance(rollup, bool)
+            params["rollup"] = "true" if rollup else "false"
+        if limit is not None:
+            assert isinstance(limit, int)
+            params["limit"] = str(limit)
+        
+        return self._call(self.host, endpoint, params)["data"]
+
 
     def info(self, hash=None, shortUrl=None):
         """ return the page title for a given bit.ly link """
@@ -185,7 +235,7 @@ class Connection(object):
         signature = hashlib.md5(hash_string).hexdigest()[:10]
         return signature
     
-    def _call(self, host, method, params, secret=None, timeout=2500):
+    def _call(self, host, method, params, secret=None, timeout=5000):
         params['format'] = params.get('format', 'json') # default to json
 
         if self.access_token:
@@ -203,10 +253,10 @@ class Connection(object):
         # force to utf8 to fix ascii codec errors
         encoded_params = []
         for k,v in params.items():
-            if type(v) in [types.ListType, types.TupleType]:
-                v = [e.encode('UTF8') for e in v]
+            if isinstance(v, (list, tuple)):
+                v = [_utf8(e) for e in v]
             else:
-                v = v.encode('UTF8')
+                v = _utf8(v)
             encoded_params.append((k,v))
         params = dict(encoded_params)
         
