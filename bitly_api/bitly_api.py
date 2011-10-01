@@ -141,19 +141,23 @@ class Connection(object):
 
     def link_clicks(self, link, **kwargs):
         params = dict(link=link)
-        return self._call_oauth2_metrics("v3/link/clicks", params)
+        data = self._call_oauth2_metrics("v3/link/clicks", params)
+        return data["link_clicks"]
 
     def link_referring_domains(self, link, **kwargs):
         params = dict(link=link)
-        return self._call_oauth2_metrics("v3/link/referring_domains", params)
+        data = self._call_oauth2_metrics("v3/link/referring_domains", params)
+        return data["referring_domains"]
 
     def link_referrers(self, link, **kwargs):
         params = dict(link=link)
-        return self._call_oauth2_metrics("v3/link/referrers", params)
+        data = self._call_oauth2_metrics("v3/link/referrers", params)
+        return data["referrers"]
 
     def link_countries(self, link, **kwargs):
         params = dict(link=link)
-        return self._call_oauth2_metrics("v3/link/countries", params)
+        data = self._call_oauth2_metrics("v3/link/countries", params)
+        return data["countries"]
     
     def _call_oauth2_metrics(self, endpoint, params, unit=None, units=None, tz_offset=None, rollup=None, limit=None):
         assert self.access_token, "This %s endpoint requires OAuth" % endpoint
