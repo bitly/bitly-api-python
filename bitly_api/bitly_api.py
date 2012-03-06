@@ -58,7 +58,7 @@ class Connection(object):
         params = {
             'login': self.login,
             'apiKey': self.api_key,
-            'uri':uri.encode('UTF-8')
+            'uri':uri
         }
         if preferred_domain:
             params['domain'] = preferred_domain
