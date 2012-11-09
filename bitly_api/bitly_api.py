@@ -20,7 +20,7 @@ class BitlyError(Error):
 
 class Connection(object):
     """
-    This is a python library for accessing the bit.ly api
+    This is a python library for accessing the bitly api
     http://github.com/bitly/bitly-api-python
     
     Usage:
@@ -30,7 +30,7 @@ class Connection(object):
     """
     def __init__(self, login, api_key, secret=None, preferred_domain='bit.ly'):
         self.host = 'api.bit.ly'
-        self.preferred_domain = preferred_domain # bit.ly or j.mp
+        self.preferred_domain = preferred_domain # bit.ly, bitly.com, or j.mp
         self.login = login
         self.api_key = api_key
         self.secret = secret
@@ -48,11 +48,11 @@ class Connection(object):
         return data['data']
     
     def shorten(self, uri, x_login=None, x_apiKey=None, preferred_domain=None):
-        """ creates a bit.ly link for a given long url 
+        """ creates a bitly link for a given long url 
         @parameter uri: long url to shorten
         @parameter x_login: login of a user to shorten on behalf of
         @parameter x_apiKey: apiKey of a user to shorten on behalf of
-        @parameter preferred_domain: bit.ly[default] or j.mp
+        @parameter preferred_domain: bit.ly[default], bitly.com, or j.mp
         """
         preferred_domain = preferred_domain or self.preferred_domain
         params = {
@@ -70,9 +70,9 @@ class Connection(object):
         return data['data']
     
     def expand(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, decode it and return the target url
-        @parameter hash: one or more bit.ly hashes
-        @parameter shortUrl: one or more bit.ly short urls
+        """ given a bitly url or hash, decode it and return the target url
+        @parameter hash: one or more bitly hashes
+        @parameter shortUrl: one or more bitly short urls
         """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
@@ -89,7 +89,7 @@ class Connection(object):
         return data['data']['expand']
 
     def clicks(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, get statistics about the clicks on that link """
+        """ given a bitly url or hash, get statistics about the clicks on that link """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = {
@@ -105,7 +105,7 @@ class Connection(object):
         return data['data']['clicks']
 
     def referrers(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, get statistics about the referrers of that link """
+        """ given a bitly url or hash, get statistics about the referrers of that link """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = {
@@ -121,7 +121,7 @@ class Connection(object):
         return data['data']['referrers']
     
     def clicks_by_day(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, get a time series of clicks
+        """ given a bitly url or hash, get a time series of clicks
         per day for the last 30 days in reverse chronological order
         (most recent to least recent) """
         if not hash and not shortUrl:
@@ -139,7 +139,7 @@ class Connection(object):
         return data['data']['clicks_by_day']
     
     def clicks_by_minute(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, get a time series of clicks
+        """ given a bitly url or hash, get a time series of clicks
         per minute for the last 30 minutes in reverse chronological
         order (most recent to least recent)"""
         if not hash and not shortUrl:
@@ -157,7 +157,7 @@ class Connection(object):
         return data['data']['clicks_by_minute']
 
     def info(self, hash=None, shortUrl=None):
-        """ return the page title for a given bit.ly link """
+        """ return the page title for a given bitly link """
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = {
@@ -173,7 +173,7 @@ class Connection(object):
         return data['data']['info']
     
     def lookup(self, url):
-        """ query for a bit.ly link based on a long url """
+        """ query for a bitly link based on a long url """
         params = {
             'url' : url,
             'login' : self.login,
