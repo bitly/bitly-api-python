@@ -240,7 +240,7 @@ class Connection(object):
             encoded_params.append((k,v))
         params = dict(encoded_params)
         
-        request = "http://%(host)s/%(method)s?%(params)s" % {
+        request = "https://%(host)s/%(method)s?%(params)s" % {
             'host':host,
             'method':method,
             'params':urllib.urlencode(params, doseq=1)
