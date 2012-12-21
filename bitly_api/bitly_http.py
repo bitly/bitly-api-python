@@ -2,9 +2,8 @@
 This class is an abstracted http handler that uses multiple underlying http libraries 
 
 it will default to
-a) google urlfetch
-b) pycurl
-c) urllib2
+a) pycurl
+b) urllib2
 
 """
 try:
