@@ -63,11 +63,15 @@ class Connection(object):
         data = self._call(self.host, 'v3/shorten', params, self.secret)
         return data['data']
     
-    def expand(self, hash=None, shortUrl=None):
+    def expand(self, hash=None, shortUrl=None, link=None):
         """ given a bitly url or hash, decode it and return the target url
         @parameter hash: one or more bitly hashes
         @parameter shortUrl: one or more bitly short urls
+        @parameter link: one or more bitly short urls (preferred vocabulary)
         """
+        if link and not shortUrl:
+            shortUrl = link
+
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
@@ -202,8 +206,11 @@ class Connection(object):
         data = self._call_oauth2("v3/user/link_history", params)
         return data["link_history"]
     
-    def info(self, hash=None, shortUrl=None):
+    def info(self, hash=None, shortUrl=None, link=None):
         """ return the page title for a given bitly link """
+        if link and not shortUrl:
+            shortUrl = link
+
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
@@ -215,8 +222,17 @@ class Connection(object):
         data = self._call(self.host, 'v3/info', params, self.secret)
         return data['data']['info']
     
+    def link_lookup(self, url): #TODO: test with SSL
+        """ query for a bitly link based on a long url (or list of long urls)"""
+        params = dict(url=url)
+        data = self._call(self.host, 'v3/link/lookup', params, self.secret)
+        return data
+
+
     def lookup(self, url):
         """ query for a bitly link based on a long url """
+        warnings.warn("/v3/lookup is depricated in favor of /v3/link/lookup", DeprecationWarning)
+
         params = dict(url=url)
 
         data = self._call(self.host, 'v3/lookup', params, self.secret)
