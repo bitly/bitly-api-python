@@ -38,7 +38,8 @@ class Connection(object):
     """
     
     def __init__(self, login=None, api_key=None, access_token=None, secret=None):
-        self.host = 'api.bitly.com'
+        self.host = 'api.bit.ly'
+        self.ssl_host = 'api-ssl.bit.ly'
         self.login = login
         self.api_key = api_key
         self.access_token = access_token
@@ -185,7 +186,7 @@ class Connection(object):
         params = dict(domain=domain)
         data = self._call_oauth2_metrics("v3/user/tracking_domain_shorten_counts", params, **kwargs)
         return data["tracking_domain_shorten_counts"]
-        
+
     def user_link_history(self, created_before=None, created_after=None, archived=None, limit=None, offset=None):
         params = dict()
         if created_before is not None:
@@ -298,7 +299,7 @@ class Connection(object):
         
     def _call_oauth2(self, endpoint, params):
         assert self.access_token, "This %s endpoint requires OAuth" % endpoint
-        return self._call(self.host, endpoint, params)["data"]
+        return self._call(self.ssl_host, endpoint, params)["data"]
     
     def _call(self, host, method, params, secret=None, timeout=5000):
         params['format'] = params.get('format', 'json') # default to json
@@ -306,6 +307,7 @@ class Connection(object):
         if self.access_token:
             scheme = 'https'
             params['access_token'] = self.access_token
+            host = self.ssl_host
         else:
             scheme = 'http'
             params['login'] = self.login
@@ -331,6 +333,9 @@ class Connection(object):
             'method': method,
             'params': urllib.urlencode(params, doseq=1)
             }
+
+        print request
+
         try:
             http_response = bitly_http.get(request, timeout, user_agent = self.user_agent)
             if http_response['http_status_code'] != 200:
