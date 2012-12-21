@@ -334,8 +334,6 @@ class Connection(object):
             'params': urllib.urlencode(params, doseq=1)
             }
 
-        print request
-
         try:
             http_response = bitly_http.get(request, timeout, user_agent = self.user_agent)
             if http_response['http_status_code'] != 200:
