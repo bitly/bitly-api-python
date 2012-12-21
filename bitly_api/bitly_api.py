@@ -237,6 +237,61 @@ class Connection(object):
         data = self._call(self.host, end_point, params, self.secret)
         return data['data']['bitly_pro_domain']
 
+    def highvalue(self, limit=10, lang='en'):
+        params = dict(lang=lang)
+        data = self._call_oauth2_metrics("v3/highvalue", params, limit=limit)
+        return data
+
+    def realtime_bursting_phrases(self):
+        data = self._call_oauth2_metrics("v3/realtime/bursting_phrases", dict())
+        return data["phrases"]
+
+    def realtime_hot_phrases(self):
+        data = self._call_oauth2_metrics("v3/realtime/hot_phrases", dict())
+        return data["phrases"]
+
+    def realtime_clickrate(self, phrase):
+        params = dict(phrase=phrase)
+        data = self._call_oauth2_metrics("v3/realtime/clickrate", params)
+        return data["rate"]
+
+    def link_info(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/info", params)
+        return data
+
+    def link_content(self, link, content_type="html"):
+        params = dict(link=link, content_type=content_type)
+        data = self._call_oauth2_metrics("v3/link/content", params)
+        return data["content"]
+
+    def link_category(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/category", params)
+        return data["categories"]
+
+    def link_social(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/social", params)
+        return data["social_scores"]
+
+    def link_location(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/location", params)
+        return data["locations"]
+
+    def link_language(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/language", params)
+        return data["languages"]
+
+    #TODO - Incomplete 
+    def search(self, query, offset=None, cities=None, domain=None, fields=None, limit=10, lang='en'):
+        params = dict(query=query, offset=offset, cities=cities, domain=domain,
+                     fields=fields, lang=lang)
+        data = self._call_oauth2_metrics("v3/search", params, limit=limit)
+        return data['results']
+
     @classmethod
     def _generateSignature(self, params, secret):
         if not params or not secret:
@@ -318,8 +373,6 @@ class Connection(object):
             'params': urllib.urlencode(params, doseq=1)
             }
 
-        print request
-
         try:
             http_response = bitly_http.get(request, timeout, user_agent = self.user_agent)
             if http_response['http_status_code'] != 200:
@@ -334,4 +387,3 @@ class Connection(object):
             raise
         except Exception:
             raise BitlyError(None, sys.exc_info()[1])
-
