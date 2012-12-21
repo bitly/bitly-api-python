@@ -150,15 +150,35 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/link/clicks", params, **kwargs)
         return data["link_clicks"]
 
+    def link_encoders_count(self, link, **kwargs):
+        """return the count of bitly encoders who have saved this link"""
+        params = dict(link=link)
+        data = self._call(self.host, 'v3/link/encoders_count', params, **kwargs)
+        return data['data']
+
     def link_referring_domains(self, link, **kwargs):
+        """returns the domains that are referring traffic to a single bitly link"""
         params = dict(link=link)
         data = self._call_oauth2_metrics("v3/link/referring_domains", params, **kwargs)
         return data["referring_domains"]
 
+    def link_referrers_by_domain(self, link, **kwargs):
+        """returns the pages that are referring traffic to a single bitly link, grouped by domain"""
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/referrers_by_domain", params, **kwargs)
+        return data["referrers"]
+
     def link_referrers(self, link, **kwargs):
+        """returns the pages are are referring traffic to a single bitly link"""
         params = dict(link=link)
         data = self._call_oauth2_metrics("v3/link/referrers", params, **kwargs)
         return data["referrers"]
+
+    def link_shares(self,link, **kwargs):
+        """return number of shares of a bitly link"""
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/shares", params, **kwargs)
+        return data
 
     def link_countries(self, link, **kwargs):
         params = dict(link=link)
