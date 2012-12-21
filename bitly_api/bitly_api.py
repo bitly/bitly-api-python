@@ -223,12 +223,11 @@ class Connection(object):
         data = self._call(self.host, 'v3/info', params, self.secret)
         return data['data']['info']
     
-    def link_lookup(self, url): #TODO: test with SSL
+    def link_lookup(self, url):
         """ query for a bitly link based on a long url (or list of long urls)"""
         params = dict(url=url)
         data = self._call(self.host, 'v3/link/lookup', params, self.secret)
-        return data
-
+        return data['data']['link_lookup']
 
     def lookup(self, url):
         """ query for a bitly link based on a long url """
@@ -238,6 +237,58 @@ class Connection(object):
 
         data = self._call(self.host, 'v3/lookup', params, self.secret)
         return data['data']['lookup']
+
+    def user_link_edit(self, link, edit, title=None, note=None, private=None, user_ts=None, archived=None):
+        """edit a link in a user's history"""
+        params = dict()
+
+        if not link:
+            raise BitlyError(500, 'MISSING_ARG_LINK')
+        
+        if not edit:
+            raise BitlyError(500, 'MISSING_ARG_EDIT')
+
+
+        params['link'] = link
+        params['edit'] = edit
+        if title is not None:
+            params['title'] = str(title)
+        if note is not None:
+            params['note'] = str(note)
+        if private is not None:
+            params['private'] = bool(private)
+        if user_ts is not None:
+            params['user_ts'] = user_ts
+        if archived is not None:
+            params['archived'] = archived
+
+        data = self._call_oauth2("v3/user/link_edit", params)
+        return data['link_edit']
+
+    def user_link_lookup(self, url):
+        """query for whether a user has shortened a particular long URL. don't confuse with v3/link/lookup. """
+        params = dict(url=url)
+        data = self._call(self.host, 'v3/user/link_lookup', params, self.secret)
+        return data['data']['link_lookup']
+
+    def user_link_save(self, longUrl=None, long_url=None, title=None, note=None, private=None, user_ts=None):
+        """save a link into the user's history"""
+        params = dict()
+        if not longUrl and not long_url:
+            raise BitlyError('500', 'MISSING_ARG_LONG_URL')
+        params['longUrl'] = longUrl or long_url
+        if title is not None:
+            params['title'] = str(title)
+        if note is not None:
+            params['note'] = str(note)
+        if private is not None:
+            params['private'] = bool(private)
+        if user_ts is not None:
+            params['user_ts'] = user_ts
+
+        data = self._call_oauth2("v3/user/link_save", params)
+        return data['link_save']
+
 
     def pro_domain(self, domain):
         """ is the domain assigned for bitly.pro? """
