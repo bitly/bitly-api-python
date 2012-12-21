@@ -185,10 +185,16 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/link/countries", params, **kwargs)
         return data["countries"]
     
+    def user_clicks(self, **kwargs):
+        """aggregate number of clicks on all of this user's bitly links"""
+        params = dict()
+        data = self._call_oauth2('v3/user/clicks', params, **kwargs)
+        return data
+
     def user_popular_links(self, **kwargs):
         data = self._call_oauth2_metrics("v3/user/popular_links", dict(), **kwargs)
         return data["popular_links"]
-        
+
     def user_shorten_counts(self, **kwargs):
         data = self._call_oauth2_metrics("v3/user/shorten_counts", dict(), **kwargs)
         return data["shorten_counts"]
