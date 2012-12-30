@@ -187,13 +187,37 @@ class Connection(object):
     
     def user_clicks(self, **kwargs):
         """aggregate number of clicks on all of this user's bitly links"""
-        params = dict()
-        data = self._call_oauth2('v3/user/clicks', params, **kwargs)
+        data = self._call_oauth2_metrics('v3/user/clicks', dict(), **kwargs)
         return data
+
+    def user_countries(self, **kwargs):
+        """aggregate metrics about countries from which people are clicking on all of a user's bitly links"""
+        data = self._call_oauth2_metrics('v3/user/countries', dict(), **kwargs)
+        return data["countries"]
 
     def user_popular_links(self, **kwargs):
         data = self._call_oauth2_metrics("v3/user/popular_links", dict(), **kwargs)
         return data["popular_links"]
+
+    def user_referrers(self, **kwargs):
+        """aggregate metrics about the referrers for all of the authed user's bitly links"""
+        data = self._call_oauth2_metrics("v3/user/referrers", dict(), **kwargs)
+        return data["referrers"]
+
+    def user_referring_domains(self, **kwargs):
+        """aggregate metrics about the domains referring traffic to all of the authed user's bitly links"""
+        data = self._call_oauth2_metrics("v3/user/referring_domains", dict(), **kwargs)
+        return data["referring_domains"]
+
+    def user_share_counts(self, **kwargs):
+        """number of shares by authed user in given time period"""
+        data = self._call_oauth2_metrics("v3/user/share_counts", dict(), **kwargs)
+        return data["share_counts"]
+
+    def user_share_counts_by_share_type(self, **kwargs):
+        """number of shares by authed user broken down by type (facebook, twitter, email) in a give time period"""
+        data = self._call_oauth2_metrics("v3/user/share_counts_by_share_type", dict(), **kwargs)
+        return data["share_counts_by_share_type"]
 
     def user_shorten_counts(self, **kwargs):
         data = self._call_oauth2_metrics("v3/user/shorten_counts", dict(), **kwargs)
