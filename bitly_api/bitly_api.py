@@ -237,6 +237,11 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/user/tracking_domain_shorten_counts", params, **kwargs)
         return data["tracking_domain_shorten_counts"]
 
+    def user_info(self, **kwargs):
+        """return or update info about a user"""
+        data = self._call_oauth2_metrics("v3/user/info", dict(), **kwargs)
+        return data
+
     def user_link_history(self, created_before=None, created_after=None, archived=None, limit=None, offset=None):
         params = dict()
         if created_before is not None:
@@ -256,6 +261,22 @@ class Connection(object):
             params["offset"] = str(offset)
         data = self._call_oauth2("v3/user/link_history", params)
         return data["link_history"]
+
+    def user_network_history(self, offset=None, expand_client_id=False, limit=None, expand_user=False):
+        params = dict()
+        if expand_client_id is True:
+            params["expand_client_id"] = "true"
+        if expand_user is True:
+            params["expand_user"] = "true"
+        if offset is not None:
+            assert isinstance(offset, int)
+            params["offset"] = str(offset)
+        if limit is not None:
+            assert isinstance(limit, int)
+            params["limit"] = str(limit)
+        data = self._call_oauth2("v3/user/network_history", params)
+        return data
+
     
     def info(self, hash=None, shortUrl=None, link=None):
         """ return the page title for a given bitly link """
