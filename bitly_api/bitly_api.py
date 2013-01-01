@@ -375,6 +375,123 @@ class Connection(object):
         data = self._call(self.host, end_point, params, self.secret)
         return data['data']['bitly_pro_domain']
 
+    def bundle_archive(self, bundle_link):
+        """archive a bundle for the authenticated user"""
+        params = dict(bundle_link=bundle_link)
+        data = self._call_oauth2_metrics("v3/bundle/archive", params)
+        return data
+
+    def bundle_bundles_by_user(self, user=None, expand_user=False):
+        """list bundles by user (defaults to authed user)"""
+        params = dict()
+        if user is not None:
+            params["user"] = user
+        if expand_user is True:
+            params["expand_user"] = "true"
+        data = self._call_oauth2_metrics("v3/bundle/bundles_by_user", params)
+        return data
+
+    #def bundle_clone(self, bundle_link): # TODO: 500s
+        #"""clone a bundle for the authenticated user"""
+        #params = dict(bundle_link=bundle_link)
+        #data = self._call_oauth2_metrics("v3/bundle/clone", params)
+        #return data
+
+    def bundle_collaborator_add(self, bundle_link, collaborator=None):
+        """add a collaborator a bundle"""
+        params = dict(bundle_link=bundle_link)
+        if collaborator is not None:
+            params["collaborator"] = collaborator
+        data = self._call_oauth2_metrics("v3/bundle/collaborator_add", params)
+        return data
+
+    def bundle_collaborator_remove(self, bundle_link, collaborator):
+        """remove a collaborator from a bundle"""
+        params = dict(bundle_link=bundle_link)
+        params["collaborator"] = collaborator
+        data = self._call_oauth2_metrics("v3/bundle/collaborator_remove", params)
+        return data
+
+    def bundle_contents(self, bundle_link, expand_user=False):
+        """list the contents of a bundle"""
+        params=dict(bundle_link=bundle_link)
+        if expand_user:
+            params["expand_user"] = "true"
+        data = self._call_oauth2_metrics("v3/bundle/contents", params)
+        return data
+
+    def bundle_create(self, private=False, title=None, description=None):
+        """create a bundle"""
+        params = dict()
+        if private:
+            params["private"] = "true"
+        if title is not None:
+            assert isinstance(title, str)
+            params["title"] = title
+        if description is not None:
+            assert isinstance(description, str)
+            params["description"] = description
+        data = self._call_oauth2_metrics("v3/bundle/create", params)
+        return data
+
+    def bundle_edit(self, bundle_link, edit=None, title=None, description=None, private=None, preview=None, og_image=None):
+        """edit a bundle for the authenticated user"""
+        params = dict(bundle_link=bundle_link)
+        if edit:
+            assert isinstance(edit, str)
+            params["edit"] = edit
+        if title:
+            assert isinstance(title, str)
+            params["title"] = title
+        if description:
+            assert isinstance(description, str)
+            params["description"] = description
+        if private is not None:
+            if private:
+                params["private"] = "true"
+            else:
+                params["private"] = "false"
+        if preview is not None:
+            if preview:
+                params["preview"] = "true"
+            else:
+                params["preview"] = "false"
+        if og_image:
+            assert isinstance(og_image, str)
+            params["og_image"] = og_image
+        data = self._call_oauth2_metrics("v3/bundle/edit", params)
+        return data
+
+    def bundle_link_add(self, bundle_link, link, title=None):
+        """add a link to a bundle"""
+        params = dict(bundle_link=bundle_link, link=link)
+        if title:
+            assert isinstance(title, str)
+            params["title"] = title
+        data = self._call_oauth2_metrics("v3/bundle/link_add", params)
+        return data
+
+    def bundle_link_comment_add(self, bundle_link, link, comment):
+        """add a comment to a link in a bundle"""
+        params = dict(bundle_link=bundle_link, link=link, comment=comment)
+        data = self._call_oauth2_metrics("v3/bundle/link_comment_add", params)
+        return data
+
+    def bundle_link_comment_edit(self, bundle_link, link, comment_id, comment):
+        """edit a comment on a link in a bundle"""
+        params = dict(bundle_link=bundle_link, link=link, comment_id=comment_id, comment=comment)
+        data = self._call_oauth2_metrics("v3/bundle/link_comment_edit", params)
+        return data
+
+    def bundle_link_comment_remove(self, bundle_link, link, comment_id):
+        """ remove a comment on a link in a bundle"""
+        params = dict(bundle_link=bundle_link, link=link, comment_id=comment_id)
+        data = self._call_oauth2_metrics("v3/bundle/link_comment_remove", params)
+        return data
+
+
+
+
     def highvalue(self, limit=10, lang='en'):
         params = dict(lang=lang)
         data = self._call_oauth2_metrics("v3/highvalue", params, limit=limit)
