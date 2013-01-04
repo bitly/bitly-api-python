@@ -586,10 +586,20 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/link/language", params)
         return data["languages"]
 
-    #TODO - Incomplete 
     def search(self, query, offset=None, cities=None, domain=None, fields=None, limit=10, lang='en'):
-        params = dict(query=query, offset=offset, cities=cities, domain=domain,
-                     fields=fields, lang=lang)
+        params = dict(query=query, lang=lang)
+        if offset:
+            assert isinstance(offset, int)
+            params["offset"] = str(offset)
+        if cities: # TODO: check format
+            assert isinstance(cities, str)
+            params["cities"] = cities
+        if domain:
+            assert isinstance(domain, str)
+            params["domain"] = domain
+        if fields:
+            assert isinstance(fields, str)
+            params["fields"] = fields
         data = self._call_oauth2_metrics("v3/search", params, limit=limit)
         return data['results']
 
