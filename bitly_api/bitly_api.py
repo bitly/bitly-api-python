@@ -391,11 +391,11 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/bundle/bundles_by_user", params)
         return data
 
-    #def bundle_clone(self, bundle_link): # TODO: 500s
-        #"""clone a bundle for the authenticated user"""
-        #params = dict(bundle_link=bundle_link)
-        #data = self._call_oauth2_metrics("v3/bundle/clone", params)
-        #return data
+    def bundle_clone(self, bundle_link): # TODO: 500s
+        """clone a bundle for the authenticated user"""
+        params = dict(bundle_link=bundle_link)
+        data = self._call_oauth2_metrics("v3/bundle/clone", params)
+        return data
 
     def bundle_collaborator_add(self, bundle_link, collaborator=None):
         """add a collaborator a bundle"""
@@ -489,8 +489,54 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/bundle/link_comment_remove", params)
         return data
 
+    def bundle_link_edit(self, bundle_link, link, edit, title=None, preview=None):
+        """ edit the title for a link """
+        params = dict(bundle_link=bundle_link, link=link)
+        if edit == "title":
+            params["edit"] = edit
+            assert isinstance(title, str)
+            params["title"] = title
+        elif edit == "preview":
+            params["edit"] = edit
+            assert isinstance(preview, bool)
+            if preview:
+                params["preview"] = "true"
+            else:
+                params["preview"] = "false"
+        else:
+            raise BitlyError(500, "PARAM EDIT MUST HAVE VALUE TITLE OR PREVIEW") # all caps is fun!
+        data = self._call_oauth2_metrics("v3/bundle/link_edit", params)
+        return data
 
+    def bundle_link_remove(self, bundle_link, link):
+        """ remove a link from a bundle """
+        params = dict(bundle_link=bundle_link, link=link)
+        data = self._call_oauth2_metrics("v3/bundle/link_remove", params)
+        return data
 
+    def bundle_link_reorder(self, bundle_link, link, display_order):
+        """ reorder the links in a bundle"""
+        params = dict(bundle_link=bundle_link, link=link, display_order=display_order)
+        data = self._call_oauth2_metrics("v3/bundle/link_reorder", params)
+        return data
+
+    def bundle_collaborator_remove(self, bundle_link, collaborator):
+        """remove a pending collaborator from a bundle"""
+        params = dict(bundle_link=bundle_link)
+        params["collaborator"] = collaborator
+        data = self._call_oauth2_metrics("v3/bundle/pending_collaborator_remove", params)
+        return data
+
+    def bundle_view_count(self, bundle_link):
+        """ get the number of views on a bundle """
+        params = dict(bundle_link=bundle_link)
+        data = self._call_oauth2_metrics("v3/bundle/view_count", params)
+        return data
+
+    def user_bundle_history(self):
+        """ return the bundles that this user has access to """
+        data = self._call_oauth2_metrics("v3/user/bundle_history", dict())
+        return data
 
     def highvalue(self, limit=10, lang='en'):
         params = dict(lang=lang)
