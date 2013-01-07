@@ -29,7 +29,7 @@ def makeUrllib2Http(url, user_agent):
         response = opener.open(url)
         code = response.code
         data = response.read()
-    except urllib2.UrlError, e:
+    except urllib2.URLError, e:
         return 500, str(e)
     except urllib2.HTTPError, e:
         code = e.code
