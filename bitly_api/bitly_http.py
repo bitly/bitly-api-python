@@ -8,10 +8,10 @@ b) urllib2
 """
 try:
     import pycurl
-    PYCURL=True
+    PYCURL = True
 except ImportError:
-    PYCURL=False
-    
+    PYCURL = False
+
 import urllib2
 import cStringIO
 
@@ -24,7 +24,7 @@ def makeUrllib2Http(url, user_agent):
     dont_redirect = DontRedirect()
     opener = urllib2.build_opener(dont_redirect)
     opener.addheaders = [('User-agent', user_agent + ' urllib')]
-    
+
     try:
         response = opener.open(url)
         code = response.code
@@ -35,11 +35,11 @@ def makeUrllib2Http(url, user_agent):
         code = e.code
         data = e.read()
     return code, data
-    
+
 def makePycurlHttp(url, timeout, user_agent):
     try:
         buffer = cStringIO.StringIO()
-        
+
         curl = pycurl.Curl()
         curl.setopt(pycurl.TIMEOUT_MS, timeout)
         curl.setopt(pycurl.URL, url)
@@ -50,7 +50,7 @@ def makePycurlHttp(url, timeout, user_agent):
         curl.setopt(pycurl.USERAGENT, user_agent + ' ' + pycurl.version)
         # if referer:
         #     curl.setopt(pycurl.REFERER, referer)
-        
+
         curl.perform()
         result = buffer.getvalue()
         buffer.close()
@@ -63,7 +63,7 @@ def makePycurlHttp(url, timeout, user_agent):
             pass
         raise
     return http_status_code, result
-    
+
 def get(url, timeout, user_agent):
     if PYCURL:
         code, result = makePycurlHttp(url, timeout, user_agent)
