@@ -2,9 +2,8 @@
 This class is an abstracted http handler that uses multiple underlying http libraries 
 
 it will default to
-a) google urlfetch
-b) pycurl
-c) urllib2
+a) pycurl
+b) urllib2
 
 """
 try:
@@ -57,10 +56,10 @@ def makePycurlHttp(url, timeout, user_agent):
         buffer.close()
         http_status_code = curl.getinfo(pycurl.HTTP_CODE)
         curl.close()
-    except:
+    except Exception:
         try:
             curl.close()
-        except:
+        except Exception:
             pass
         raise
     return http_status_code, result

@@ -8,6 +8,7 @@ import sys
 import time
 import types
 import urllib
+import warnings
 
 class Error(Exception):
     pass
@@ -17,49 +18,43 @@ class BitlyError(Error):
         Error.__init__(self,message)
         self.code = code
 
+def _utf8(s):
+    if isinstance(s, unicode):
+        s = s.encode('utf-8')
+    assert isinstance(s, str)
+    return s
 
 class Connection(object):
     """
-    This is a python library for accessing the bit.ly api
+    This is a python library for accessing the bitly api
     http://github.com/bitly/bitly-api-python
     
     Usage:
         import bitly_api
         c = bitly_api.Connection('bitlyapidemo','R_{{apikey}}')
+        # or to use oauth2 endpoints
+        c = bitly_api.Connection(access_token='...')
         c.shorten('http://www.google.com/')
     """
-    def __init__(self, login, api_key, secret=None, preferred_domain='bit.ly'):
+    
+    def __init__(self, login=None, api_key=None, access_token=None, secret=None):
         self.host = 'api.bit.ly'
-        self.preferred_domain = preferred_domain # bit.ly or j.mp
+        self.ssl_host = 'api-ssl.bit.ly'
         self.login = login
         self.api_key = api_key
+        self.access_token = access_token
         self.secret = secret
         (major, minor, micro, releaselevel, serial) = sys.version_info
         self.user_agent = "Python/%d.%d.%d bitly_api/%s" % (major, minor, micro, '?')
     
-    def keyword(self, hash, keyword):
-        """ assign a keyword to a hash """
-        data = self._call(self.host, 'v3/keyword', {
-                'login':self.login,
-                'apiKey':self.api_key,
-                'hash':hash,
-                'keyword':keyword
-            }, self.secret)
-        return data['data']
-    
     def shorten(self, uri, x_login=None, x_apiKey=None, preferred_domain=None):
-        """ creates a bit.ly link for a given long url 
+        """ creates a bitly link for a given long url 
         @parameter uri: long url to shorten
         @parameter x_login: login of a user to shorten on behalf of
         @parameter x_apiKey: apiKey of a user to shorten on behalf of
-        @parameter preferred_domain: bit.ly[default] or j.mp
+        @parameter preferred_domain: bit.ly[default], bitly.com, or j.mp
         """
-        preferred_domain = preferred_domain or self.preferred_domain
-        params = {
-            'login': self.login,
-            'apiKey': self.api_key,
-            'uri':uri.encode('UTF-8')
-        }
+        params = dict(uri=uri)
         if preferred_domain:
             params['domain'] = preferred_domain
         if x_login:
@@ -69,17 +64,18 @@ class Connection(object):
         data = self._call(self.host, 'v3/shorten', params, self.secret)
         return data['data']
     
-    def expand(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, decode it and return the target url
-        @parameter hash: one or more bit.ly hashes
-        @parameter shortUrl: one or more bit.ly short urls
+    def expand(self, hash=None, shortUrl=None, link=None):
+        """ given a bitly url or hash, decode it and return the target url
+        @parameter hash: one or more bitly hashes
+        @parameter shortUrl: one or more bitly short urls
+        @parameter link: one or more bitly short urls (preferred vocabulary)
         """
+        if link and not shortUrl:
+            shortUrl = link
+
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -89,13 +85,11 @@ class Connection(object):
         return data['data']['expand']
 
     def clicks(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, get statistics about the clicks on that link """
+        """ given a bitly url or hash, get statistics about the clicks on that link """
+        warnings.warn("/v3/clicks is depricated in favor of /v3/link/clicks", DeprecationWarning)
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -103,15 +97,14 @@ class Connection(object):
 
         data = self._call(self.host, 'v3/clicks', params, self.secret)
         return data['data']['clicks']
+    
 
     def referrers(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, get statistics about the referrers of that link """
+        """ given a bitly url or hash, get statistics about the referrers of that link """
+        warnings.warn("/v3/referrers is depricated in favor of /v3/link/referrers", DeprecationWarning)
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -121,15 +114,13 @@ class Connection(object):
         return data['data']['referrers']
     
     def clicks_by_day(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, get a time series of clicks
+        """ given a bitly url or hash, get a time series of clicks
         per day for the last 30 days in reverse chronological order
         (most recent to least recent) """
+        warnings.warn("/v3/clicks_by_day is depricated in favor of /v3/link/clicks?unit=day", DeprecationWarning)
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -139,15 +130,13 @@ class Connection(object):
         return data['data']['clicks_by_day']
     
     def clicks_by_minute(self, hash=None, shortUrl=None):
-        """ given a bit.ly url or hash, get a time series of clicks
+        """ given a bitly url or hash, get a time series of clicks
         per minute for the last 30 minutes in reverse chronological
         order (most recent to least recent)"""
+        warnings.warn("/v3/clicks_by_minute is depricated in favor of /v3/link/clicks?unit=minute", DeprecationWarning)
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -156,14 +145,147 @@ class Connection(object):
         data = self._call(self.host, 'v3/clicks_by_minute', params, self.secret)
         return data['data']['clicks_by_minute']
 
-    def info(self, hash=None, shortUrl=None):
-        """ return the page title for a given bit.ly link """
+    def link_clicks(self, link, **kwargs):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/clicks", params, **kwargs)
+        return data["link_clicks"]
+
+    def link_encoders_count(self, link, **kwargs):
+        """return the count of bitly encoders who have saved this link"""
+        params = dict(link=link)
+        data = self._call(self.host, 'v3/link/encoders_count', params, **kwargs)
+        return data['data']
+
+    def link_referring_domains(self, link, **kwargs):
+        """returns the domains that are referring traffic to a single bitly link"""
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/referring_domains", params, **kwargs)
+        return data["referring_domains"]
+
+    def link_referrers_by_domain(self, link, **kwargs):
+        """returns the pages that are referring traffic to a single bitly link, grouped by domain"""
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/referrers_by_domain", params, **kwargs)
+        return data["referrers"]
+
+    def link_referrers(self, link, **kwargs):
+        """returns the pages are are referring traffic to a single bitly link"""
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/referrers", params, **kwargs)
+        return data["referrers"]
+
+    def link_shares(self,link, **kwargs):
+        """return number of shares of a bitly link"""
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/shares", params, **kwargs)
+        return data
+
+    def link_countries(self, link, **kwargs):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/countries", params, **kwargs)
+        return data["countries"]
+    
+    def user_clicks(self, **kwargs):
+        """aggregate number of clicks on all of this user's bitly links"""
+        data = self._call_oauth2_metrics('v3/user/clicks', dict(), **kwargs)
+        return data
+
+    def user_countries(self, **kwargs):
+        """aggregate metrics about countries from which people are clicking on all of a user's bitly links"""
+        data = self._call_oauth2_metrics('v3/user/countries', dict(), **kwargs)
+        return data["countries"]
+
+    def user_popular_links(self, **kwargs):
+        data = self._call_oauth2_metrics("v3/user/popular_links", dict(), **kwargs)
+        return data["popular_links"]
+
+    def user_referrers(self, **kwargs):
+        """aggregate metrics about the referrers for all of the authed user's bitly links"""
+        data = self._call_oauth2_metrics("v3/user/referrers", dict(), **kwargs)
+        return data["referrers"]
+
+    def user_referring_domains(self, **kwargs):
+        """aggregate metrics about the domains referring traffic to all of the authed user's bitly links"""
+        data = self._call_oauth2_metrics("v3/user/referring_domains", dict(), **kwargs)
+        return data["referring_domains"]
+
+    def user_share_counts(self, **kwargs):
+        """number of shares by authed user in given time period"""
+        data = self._call_oauth2_metrics("v3/user/share_counts", dict(), **kwargs)
+        return data["share_counts"]
+
+    def user_share_counts_by_share_type(self, **kwargs):
+        """number of shares by authed user broken down by type (facebook, twitter, email) in a give time period"""
+        data = self._call_oauth2_metrics("v3/user/share_counts_by_share_type", dict(), **kwargs)
+        return data["share_counts_by_share_type"]
+
+    def user_shorten_counts(self, **kwargs):
+        data = self._call_oauth2_metrics("v3/user/shorten_counts", dict(), **kwargs)
+        return data["shorten_counts"]
+
+    def user_tracking_domain_list(self):
+        data = self._call_oauth2("v3/user/tracking_domain_list", dict())
+        return data["tracking_domains"]
+        
+    def user_tracking_domain_clicks(self, domain, **kwargs):
+        params = dict(domain=domain)
+        data = self._call_oauth2_metrics("v3/user/tracking_domain_clicks", params, **kwargs)
+        return data["tracking_domain_clicks"]
+        
+    def user_tracking_domain_shorten_counts(self, domain, **kwargs):
+        params = dict(domain=domain)
+        data = self._call_oauth2_metrics("v3/user/tracking_domain_shorten_counts", params, **kwargs)
+        return data["tracking_domain_shorten_counts"]
+
+    def user_info(self, **kwargs):
+        """return or update info about a user"""
+        data = self._call_oauth2_metrics("v3/user/info", dict(), **kwargs)
+        return data
+
+    def user_link_history(self, created_before=None, created_after=None, archived=None, limit=None, offset=None):
+        params = dict()
+        if created_before is not None:
+            assert isinstance(limit, int)
+            params["created_before"] = created_before
+        if created_after is not None:
+            assert isinstance(limit, int)
+            params["created_after"] = created_after
+        if archived is not None:
+            assert isinstance(archived, bool)
+            params["archived"] = "true" if archived else "false"
+        if limit is not None:
+            assert isinstance(limit, int)
+            params["limit"] = str(limit)
+        if offset is not None:
+            assert isinstance(offset, int)
+            params["offset"] = str(offset)
+        data = self._call_oauth2("v3/user/link_history", params)
+        return data["link_history"]
+
+    def user_network_history(self, offset=None, expand_client_id=False, limit=None, expand_user=False):
+        params = dict()
+        if expand_client_id is True:
+            params["expand_client_id"] = "true"
+        if expand_user is True:
+            params["expand_user"] = "true"
+        if offset is not None:
+            assert isinstance(offset, int)
+            params["offset"] = str(offset)
+        if limit is not None:
+            assert isinstance(limit, int)
+            params["limit"] = str(limit)
+        data = self._call_oauth2("v3/user/network_history", params)
+        return data
+
+    
+    def info(self, hash=None, shortUrl=None, link=None):
+        """ return the page title for a given bitly link """
+        if link and not shortUrl:
+            shortUrl = link
+
         if not hash and not shortUrl:
             raise BitlyError(500, 'MISSING_ARG_SHORTURL')
-        params = {
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        params = dict()
         if hash:
             params['hash'] = hash
         if shortUrl:
@@ -172,18 +294,74 @@ class Connection(object):
         data = self._call(self.host, 'v3/info', params, self.secret)
         return data['data']['info']
     
+    def link_lookup(self, url):
+        """ query for a bitly link based on a long url (or list of long urls)"""
+        params = dict(url=url)
+        data = self._call(self.host, 'v3/link/lookup', params, self.secret)
+        return data['data']['link_lookup']
+
     def lookup(self, url):
-        """ query for a bit.ly link based on a long url """
-        params = {
-            'url' : url,
-            'login' : self.login,
-            'apiKey' : self.api_key
-        }
+        """ query for a bitly link based on a long url """
+        warnings.warn("/v3/lookup is depricated in favor of /v3/link/lookup", DeprecationWarning)
+
+        params = dict(url=url)
 
         data = self._call(self.host, 'v3/lookup', params, self.secret)
         return data['data']['lookup']
 
-    def pro_domain(self, domain, format='json'):
+    def user_link_edit(self, link, edit, title=None, note=None, private=None, user_ts=None, archived=None):
+        """edit a link in a user's history"""
+        params = dict()
+
+        if not link:
+            raise BitlyError(500, 'MISSING_ARG_LINK')
+        
+        if not edit:
+            raise BitlyError(500, 'MISSING_ARG_EDIT')
+
+
+        params['link'] = link
+        params['edit'] = edit
+        if title is not None:
+            params['title'] = str(title)
+        if note is not None:
+            params['note'] = str(note)
+        if private is not None:
+            params['private'] = bool(private)
+        if user_ts is not None:
+            params['user_ts'] = user_ts
+        if archived is not None:
+            params['archived'] = archived
+
+        data = self._call_oauth2("v3/user/link_edit", params)
+        return data['link_edit']
+
+    def user_link_lookup(self, url):
+        """query for whether a user has shortened a particular long URL. don't confuse with v3/link/lookup. """
+        params = dict(url=url)
+        data = self._call(self.host, 'v3/user/link_lookup', params, self.secret)
+        return data['data']['link_lookup']
+
+    def user_link_save(self, longUrl=None, long_url=None, title=None, note=None, private=None, user_ts=None):
+        """save a link into the user's history"""
+        params = dict()
+        if not longUrl and not long_url:
+            raise BitlyError('500', 'MISSING_ARG_LONG_URL')
+        params['longUrl'] = longUrl or long_url
+        if title is not None:
+            params['title'] = str(title)
+        if note is not None:
+            params['note'] = str(note)
+        if private is not None:
+            params['private'] = bool(private)
+        if user_ts is not None:
+            params['user_ts'] = user_ts
+
+        data = self._call_oauth2("v3/user/link_save", params)
+        return data['link_save']
+
+
+    def pro_domain(self, domain):
         """ is the domain assigned for bitly.pro? """
         end_point = 'v3/bitly_pro_domain'
 
@@ -193,14 +371,237 @@ class Connection(object):
         protocol_prefix = ('http://', 'https://')
         if domain.lower().startswith(protocol_prefix):
             raise BitlyError(500, 'INVALID_BARE_DOMAIN')
-        params = {
-            'domain': domain,
-            'login' : self.login,
-            'apiKey' : self.api_key,
-            'format': format,
-        }
+        params = dict(domain=domain)
         data = self._call(self.host, end_point, params, self.secret)
         return data['data']['bitly_pro_domain']
+
+    def bundle_archive(self, bundle_link):
+        """archive a bundle for the authenticated user"""
+        params = dict(bundle_link=bundle_link)
+        data = self._call_oauth2_metrics("v3/bundle/archive", params)
+        return data
+
+    def bundle_bundles_by_user(self, user=None, expand_user=False):
+        """list bundles by user (defaults to authed user)"""
+        params = dict()
+        if user is not None:
+            params["user"] = user
+        if expand_user is True:
+            params["expand_user"] = "true"
+        data = self._call_oauth2_metrics("v3/bundle/bundles_by_user", params)
+        return data
+
+    def bundle_clone(self, bundle_link): # TODO: 500s
+        """clone a bundle for the authenticated user"""
+        params = dict(bundle_link=bundle_link)
+        data = self._call_oauth2_metrics("v3/bundle/clone", params)
+        return data
+
+    def bundle_collaborator_add(self, bundle_link, collaborator=None):
+        """add a collaborator a bundle"""
+        params = dict(bundle_link=bundle_link)
+        if collaborator is not None:
+            params["collaborator"] = collaborator
+        data = self._call_oauth2_metrics("v3/bundle/collaborator_add", params)
+        return data
+
+    def bundle_collaborator_remove(self, bundle_link, collaborator):
+        """remove a collaborator from a bundle"""
+        params = dict(bundle_link=bundle_link)
+        params["collaborator"] = collaborator
+        data = self._call_oauth2_metrics("v3/bundle/collaborator_remove", params)
+        return data
+
+    def bundle_contents(self, bundle_link, expand_user=False):
+        """list the contents of a bundle"""
+        params=dict(bundle_link=bundle_link)
+        if expand_user:
+            params["expand_user"] = "true"
+        data = self._call_oauth2_metrics("v3/bundle/contents", params)
+        return data
+
+    def bundle_create(self, private=False, title=None, description=None):
+        """create a bundle"""
+        params = dict()
+        if private:
+            params["private"] = "true"
+        if title is not None:
+            assert isinstance(title, str)
+            params["title"] = title
+        if description is not None:
+            assert isinstance(description, str)
+            params["description"] = description
+        data = self._call_oauth2_metrics("v3/bundle/create", params)
+        return data
+
+    def bundle_edit(self, bundle_link, edit=None, title=None, description=None, private=None, preview=None, og_image=None):
+        """edit a bundle for the authenticated user"""
+        params = dict(bundle_link=bundle_link)
+        if edit:
+            assert isinstance(edit, str)
+            params["edit"] = edit
+        if title:
+            assert isinstance(title, str)
+            params["title"] = title
+        if description:
+            assert isinstance(description, str)
+            params["description"] = description
+        if private is not None:
+            if private:
+                params["private"] = "true"
+            else:
+                params["private"] = "false"
+        if preview is not None:
+            if preview:
+                params["preview"] = "true"
+            else:
+                params["preview"] = "false"
+        if og_image:
+            assert isinstance(og_image, str)
+            params["og_image"] = og_image
+        data = self._call_oauth2_metrics("v3/bundle/edit", params)
+        return data
+
+    def bundle_link_add(self, bundle_link, link, title=None):
+        """add a link to a bundle"""
+        params = dict(bundle_link=bundle_link, link=link)
+        if title:
+            assert isinstance(title, str)
+            params["title"] = title
+        data = self._call_oauth2_metrics("v3/bundle/link_add", params)
+        return data
+
+    def bundle_link_comment_add(self, bundle_link, link, comment):
+        """add a comment to a link in a bundle"""
+        params = dict(bundle_link=bundle_link, link=link, comment=comment)
+        data = self._call_oauth2_metrics("v3/bundle/link_comment_add", params)
+        return data
+
+    def bundle_link_comment_edit(self, bundle_link, link, comment_id, comment):
+        """edit a comment on a link in a bundle"""
+        params = dict(bundle_link=bundle_link, link=link, comment_id=comment_id, comment=comment)
+        data = self._call_oauth2_metrics("v3/bundle/link_comment_edit", params)
+        return data
+
+    def bundle_link_comment_remove(self, bundle_link, link, comment_id):
+        """ remove a comment on a link in a bundle"""
+        params = dict(bundle_link=bundle_link, link=link, comment_id=comment_id)
+        data = self._call_oauth2_metrics("v3/bundle/link_comment_remove", params)
+        return data
+
+    def bundle_link_edit(self, bundle_link, link, edit, title=None, preview=None):
+        """ edit the title for a link """
+        params = dict(bundle_link=bundle_link, link=link)
+        if edit == "title":
+            params["edit"] = edit
+            assert isinstance(title, str)
+            params["title"] = title
+        elif edit == "preview":
+            params["edit"] = edit
+            assert isinstance(preview, bool)
+            if preview:
+                params["preview"] = "true"
+            else:
+                params["preview"] = "false"
+        else:
+            raise BitlyError(500, "PARAM EDIT MUST HAVE VALUE TITLE OR PREVIEW") # all caps is fun!
+        data = self._call_oauth2_metrics("v3/bundle/link_edit", params)
+        return data
+
+    def bundle_link_remove(self, bundle_link, link):
+        """ remove a link from a bundle """
+        params = dict(bundle_link=bundle_link, link=link)
+        data = self._call_oauth2_metrics("v3/bundle/link_remove", params)
+        return data
+
+    def bundle_link_reorder(self, bundle_link, link, display_order):
+        """ reorder the links in a bundle"""
+        params = dict(bundle_link=bundle_link, link=link, display_order=display_order)
+        data = self._call_oauth2_metrics("v3/bundle/link_reorder", params)
+        return data
+
+    def bundle_collaborator_remove(self, bundle_link, collaborator):
+        """remove a pending collaborator from a bundle"""
+        params = dict(bundle_link=bundle_link)
+        params["collaborator"] = collaborator
+        data = self._call_oauth2_metrics("v3/bundle/pending_collaborator_remove", params)
+        return data
+
+    def bundle_view_count(self, bundle_link):
+        """ get the number of views on a bundle """
+        params = dict(bundle_link=bundle_link)
+        data = self._call_oauth2_metrics("v3/bundle/view_count", params)
+        return data
+
+    def user_bundle_history(self):
+        """ return the bundles that this user has access to """
+        data = self._call_oauth2_metrics("v3/user/bundle_history", dict())
+        return data
+
+    def highvalue(self, limit=10, lang='en'):
+        params = dict(lang=lang)
+        data = self._call_oauth2_metrics("v3/highvalue", params, limit=limit)
+        return data
+
+    def realtime_bursting_phrases(self):
+        data = self._call_oauth2_metrics("v3/realtime/bursting_phrases", dict())
+        return data["phrases"]
+
+    def realtime_hot_phrases(self):
+        data = self._call_oauth2_metrics("v3/realtime/hot_phrases", dict())
+        return data["phrases"]
+
+    def realtime_clickrate(self, phrase):
+        params = dict(phrase=phrase)
+        data = self._call_oauth2_metrics("v3/realtime/clickrate", params)
+        return data["rate"]
+
+    def link_info(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/info", params)
+        return data
+
+    def link_content(self, link, content_type="html"):
+        params = dict(link=link, content_type=content_type)
+        data = self._call_oauth2_metrics("v3/link/content", params)
+        return data["content"]
+
+    def link_category(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/category", params)
+        return data["categories"]
+
+    def link_social(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/social", params)
+        return data["social_scores"]
+
+    def link_location(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/location", params)
+        return data["locations"]
+
+    def link_language(self, link):
+        params = dict(link=link)
+        data = self._call_oauth2_metrics("v3/link/language", params)
+        return data["languages"]
+
+    def search(self, query, offset=None, cities=None, domain=None, fields=None, limit=10, lang='en'):
+        params = dict(query=query, lang=lang)
+        if offset:
+            assert isinstance(offset, int)
+            params["offset"] = str(offset)
+        if cities: # TODO: check format
+            assert isinstance(cities, str)
+            params["cities"] = cities
+        if domain:
+            assert isinstance(domain, str)
+            params["domain"] = domain
+        if fields:
+            assert isinstance(fields, str)
+            params["fields"] = fields
+        data = self._call_oauth2_metrics("v3/search", params, limit=limit)
+        return data['results']
 
     @classmethod
     def _generateSignature(self, params, secret):
@@ -222,10 +623,46 @@ class Connection(object):
         hash_string += secret
         signature = hashlib.md5(hash_string).hexdigest()[:10]
         return signature
+
+    def _call_oauth2_metrics(self, endpoint, params, unit=None, units=None, tz_offset=None, rollup=None, limit=None):
+        if unit is not None:
+            assert unit in ("minute", "hour", "day", "week", "mweek", "month")
+            params["unit"] = unit
+        if units is not None:
+            assert isinstance(units, int), "Unit (%r) must be integer" % units
+            params["units"] = units
+        if tz_offset is not None:
+            # tz_offset can either be a hour offset, or a timezone like North_America/New_York
+            if isinstance(tz_offset, int):
+                assert -12 <= tz_offset <= 12, "integer tz_offset must be between -12 and 12"
+            else:
+                assert isinstance(tz_offset, (str, unicode))
+            params["tz_offset"] = tz_offset
+        if rollup is not None:
+            assert isinstance(rollup, bool)
+            params["rollup"] = "true" if rollup else "false"
+        if limit is not None:
+            assert isinstance(limit, int)
+            params["limit"] = str(limit)
+        
+        return self._call_oauth2(endpoint, params)
+        
+    def _call_oauth2(self, endpoint, params):
+        assert self.access_token, "This %s endpoint requires OAuth" % endpoint
+        return self._call(self.ssl_host, endpoint, params)["data"]
     
-    def _call(self, host, method, params, secret=None, timeout=2500):
-        # default to json
-        params['format']=params.get('format','json')
+    def _call(self, host, method, params, secret=None, timeout=5000):
+        params['format'] = params.get('format', 'json') # default to json
+
+        if self.access_token:
+            scheme = 'https'
+            params['access_token'] = self.access_token
+            host = self.ssl_host
+        else:
+            scheme = 'http'
+            params['login'] = self.login
+            params['apiKey'] = self.api_key
+            
         
         if secret:
             params['signature'] = self._generateSignature(params, secret)
@@ -233,18 +670,20 @@ class Connection(object):
         # force to utf8 to fix ascii codec errors
         encoded_params = []
         for k,v in params.items():
-            if type(v) in [types.ListType, types.TupleType]:
-                v = [e.encode('UTF8') for e in v]
+            if isinstance(v, (list, tuple)):
+                v = [_utf8(e) for e in v]
             else:
-                v = v.encode('UTF8')
+                v = _utf8(v)
             encoded_params.append((k,v))
         params = dict(encoded_params)
         
-        request = "http://%(host)s/%(method)s?%(params)s" % {
-            'host':host,
-            'method':method,
-            'params':urllib.urlencode(params, doseq=1)
+        request = "%(scheme)s://%(host)s/%(method)s?%(params)s" % {
+            'scheme': scheme,
+            'host': host,
+            'method': method,
+            'params': urllib.urlencode(params, doseq=1)
             }
+
         try:
             http_response = bitly_http.get(request, timeout, user_agent = self.user_agent)
             if http_response['http_status_code'] != 200:
@@ -257,6 +696,5 @@ class Connection(object):
             return data
         except BitlyError:
             raise
-        except:
+        except Exception:
             raise BitlyError(None, sys.exc_info()[1])
-
