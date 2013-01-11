@@ -1,33 +1,53 @@
 #!/usr/local/bin/python
 """
 This is a py.test script
+
+Example usage on Unix:
+bitly-api-python $ BITLY_ACCESS_TOKEN=<accesstoken> nosetests
+or 'export' the two environment variables prior to running nosetests
 """
+import os
 import sys
 sys.path.append('../')
 import bitly_api
 
+BITLY_ACCESS_TOKEN = "BITLY_ACCESS_TOKEN"
+
+
+def get_connection():
+    """Create a Connection base on username and access token credentials"""
+    if BITLY_ACCESS_TOKEN not in os.environ:
+        raise ValueError("Environment variable '{}' required".format(BITLY_ACCESS_TOKEN))
+    access_token = os.getenv(BITLY_ACCESS_TOKEN)
+    bitly = bitly_api.Connection(access_token=access_token)
+    return bitly
+
+
 def testApi():
-    bitly = bitly_api.Connection('bitlyapidemo','R_0da49e0a9118ff35f52f629d2d71bf07')
+    bitly = get_connection()
     data = bitly.shorten('http://google.com/')
-    assert data != None
+    assert data is not None
     assert data['long_url'] == 'http://google.com/'
-    assert data['hash'] != None
-    
+    assert data['hash'] is not None
+
+
 def testExpand():
-    bitly = bitly_api.Connection('bitlyapidemo','R_0da49e0a9118ff35f52f629d2d71bf07')
-    data = bitly.expand(hash='test1')
-    assert data != None
+    bitly = get_connection()
+    data = bitly.expand(hash='test1_random_fjslfjieljfklsjflkas')
+    assert data is not None
     assert len(data) == 1
     assert data[0]['error'] == 'NOT_FOUND'
-    
+
+
 def testReferrer():
-    bitly = bitly_api.Connection('bitlyapidemo','R_0da49e0a9118ff35f52f629d2d71bf07')
+    bitly = get_connection()
     data = bitly.referrers(hash='a')
-    assert data != None
+    assert data is not None
     assert len(data) > 1
 
+
 def testProDomain():
-    bitly = bitly_api.Connection('bitlyapidemo','R_0da49e0a9118ff35f52f629d2d71bf07')
+    bitly = get_connection()
     test_data = {
         'cnn.com': False,
         'nyti.ms': True,
