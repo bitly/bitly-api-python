@@ -10,13 +10,16 @@ import types
 import urllib
 import warnings
 
+
 class Error(Exception):
     pass
 
+
 class BitlyError(Error):
     def __init__(self, code, message):
-        Error.__init__(self,message)
+        Error.__init__(self, message)
         self.code = code
+
 
 def _utf8(s):
     if isinstance(s, unicode):
@@ -24,11 +27,12 @@ def _utf8(s):
     assert isinstance(s, str)
     return s
 
+
 class Connection(object):
     """
     This is a python library for accessing the bitly api
     http://github.com/bitly/bitly-api-python
-    
+
     Usage:
         import bitly_api
         c = bitly_api.Connection('bitlyapidemo','R_{{apikey}}')
@@ -36,7 +40,7 @@ class Connection(object):
         c = bitly_api.Connection(access_token='...')
         c.shorten('http://www.google.com/')
     """
-    
+
     def __init__(self, login=None, api_key=None, access_token=None, secret=None):
         self.host = 'api.bit.ly'
         self.ssl_host = 'api-ssl.bit.ly'
@@ -46,9 +50,9 @@ class Connection(object):
         self.secret = secret
         (major, minor, micro, releaselevel, serial) = sys.version_info
         self.user_agent = "Python/%d.%d.%d bitly_api/%s" % (major, minor, micro, '?')
-    
+
     def shorten(self, uri, x_login=None, x_apiKey=None, preferred_domain=None):
-        """ creates a bitly link for a given long url 
+        """ creates a bitly link for a given long url
         @parameter uri: long url to shorten
         @parameter x_login: login of a user to shorten on behalf of
         @parameter x_apiKey: apiKey of a user to shorten on behalf of
@@ -59,11 +63,11 @@ class Connection(object):
             params['domain'] = preferred_domain
         if x_login:
             params.update({
-                'x_login':x_login,
-                'x_apiKey':x_apiKey})
+                'x_login': x_login,
+                'x_apiKey': x_apiKey})
         data = self._call(self.host, 'v3/shorten', params, self.secret)
         return data['data']
-    
+
     def expand(self, hash=None, shortUrl=None, link=None):
         """ given a bitly url or hash, decode it and return the target url
         @parameter hash: one or more bitly hashes
@@ -80,7 +84,7 @@ class Connection(object):
             params['hash'] = hash
         if shortUrl:
             params['shortUrl'] = shortUrl
-            
+
         data = self._call(self.host, 'v3/expand', params, self.secret)
         return data['data']['expand']
 
@@ -97,7 +101,6 @@ class Connection(object):
 
         data = self._call(self.host, 'v3/clicks', params, self.secret)
         return data['data']['clicks']
-    
 
     def referrers(self, hash=None, shortUrl=None):
         """ given a bitly url or hash, get statistics about the referrers of that link """
@@ -112,8 +115,8 @@ class Connection(object):
 
         data = self._call(self.host, 'v3/referrers', params, self.secret)
         return data['data']['referrers']
-    
-    def clicks_by_day(self, hash=None, shortUrl=None):
+
+    def clicks_by_day(self, hash=None, shortUrl=None, days=None):
         """ given a bitly url or hash, get a time series of clicks
         per day for the last 30 days in reverse chronological order
         (most recent to least recent) """
@@ -125,10 +128,12 @@ class Connection(object):
             params['hash'] = hash
         if shortUrl:
             params['shortUrl'] = shortUrl
+        if days:
+            params['days'] = str(days)
 
         data = self._call(self.host, 'v3/clicks_by_day', params, self.secret)
         return data['data']['clicks_by_day']
-    
+
     def clicks_by_minute(self, hash=None, shortUrl=None):
         """ given a bitly url or hash, get a time series of clicks
         per minute for the last 30 minutes in reverse chronological
@@ -174,7 +179,7 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/link/referrers", params, **kwargs)
         return data["referrers"]
 
-    def link_shares(self,link, **kwargs):
+    def link_shares(self, link, **kwargs):
         """return number of shares of a bitly link"""
         params = dict(link=link)
         data = self._call_oauth2_metrics("v3/link/shares", params, **kwargs)
@@ -184,7 +189,7 @@ class Connection(object):
         params = dict(link=link)
         data = self._call_oauth2_metrics("v3/link/countries", params, **kwargs)
         return data["countries"]
-    
+
     def user_clicks(self, **kwargs):
         """aggregate number of clicks on all of this user's bitly links"""
         data = self._call_oauth2_metrics('v3/user/clicks', dict(), **kwargs)
@@ -226,12 +231,12 @@ class Connection(object):
     def user_tracking_domain_list(self):
         data = self._call_oauth2("v3/user/tracking_domain_list", dict())
         return data["tracking_domains"]
-        
+
     def user_tracking_domain_clicks(self, domain, **kwargs):
         params = dict(domain=domain)
         data = self._call_oauth2_metrics("v3/user/tracking_domain_clicks", params, **kwargs)
         return data["tracking_domain_clicks"]
-        
+
     def user_tracking_domain_shorten_counts(self, domain, **kwargs):
         params = dict(domain=domain)
         data = self._call_oauth2_metrics("v3/user/tracking_domain_shorten_counts", params, **kwargs)
@@ -277,7 +282,6 @@ class Connection(object):
         data = self._call_oauth2("v3/user/network_history", params)
         return data
 
-    
     def info(self, hash=None, shortUrl=None, link=None):
         """ return the page title for a given bitly link """
         if link and not shortUrl:
@@ -293,7 +297,7 @@ class Connection(object):
 
         data = self._call(self.host, 'v3/info', params, self.secret)
         return data['data']['info']
-    
+
     def link_lookup(self, url):
         """ query for a bitly link based on a long url (or list of long urls)"""
         params = dict(url=url)
@@ -315,10 +319,9 @@ class Connection(object):
 
         if not link:
             raise BitlyError(500, 'MISSING_ARG_LINK')
-        
+
         if not edit:
             raise BitlyError(500, 'MISSING_ARG_EDIT')
-
 
         params['link'] = link
         params['edit'] = edit
@@ -360,7 +363,6 @@ class Connection(object):
         data = self._call_oauth2("v3/user/link_save", params)
         return data['link_save']
 
-
     def pro_domain(self, domain):
         """ is the domain assigned for bitly.pro? """
         end_point = 'v3/bitly_pro_domain'
@@ -391,7 +393,7 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/bundle/bundles_by_user", params)
         return data
 
-    def bundle_clone(self, bundle_link): # TODO: 500s
+    def bundle_clone(self, bundle_link):  # TODO: 500s
         """clone a bundle for the authenticated user"""
         params = dict(bundle_link=bundle_link)
         data = self._call_oauth2_metrics("v3/bundle/clone", params)
@@ -414,7 +416,7 @@ class Connection(object):
 
     def bundle_contents(self, bundle_link, expand_user=False):
         """list the contents of a bundle"""
-        params=dict(bundle_link=bundle_link)
+        params = dict(bundle_link=bundle_link)
         if expand_user:
             params["expand_user"] = "true"
         data = self._call_oauth2_metrics("v3/bundle/contents", params)
@@ -504,7 +506,7 @@ class Connection(object):
             else:
                 params["preview"] = "false"
         else:
-            raise BitlyError(500, "PARAM EDIT MUST HAVE VALUE TITLE OR PREVIEW") # all caps is fun!
+            raise BitlyError(500, "PARAM EDIT MUST HAVE VALUE TITLE OR PREVIEW")  # all caps is fun!
         data = self._call_oauth2_metrics("v3/bundle/link_edit", params)
         return data
 
@@ -591,7 +593,7 @@ class Connection(object):
         if offset:
             assert isinstance(offset, int)
             params["offset"] = str(offset)
-        if cities: # TODO: check format
+        if cities:  # TODO: check format
             assert isinstance(cities, str)
             params["cities"] = cities
         if domain:
@@ -611,7 +613,7 @@ class Connection(object):
         if not params.get('t'):
             # note, this uses a utc timestamp not a local timestamp
             params['t'] = str(int(time.mktime(time.gmtime())))
-        
+
         keys = params.keys()
         keys.sort()
         for k in keys:
@@ -644,15 +646,15 @@ class Connection(object):
         if limit is not None:
             assert isinstance(limit, int)
             params["limit"] = str(limit)
-        
+
         return self._call_oauth2(endpoint, params)
-        
+
     def _call_oauth2(self, endpoint, params):
         assert self.access_token, "This %s endpoint requires OAuth" % endpoint
         return self._call(self.ssl_host, endpoint, params)["data"]
-    
+
     def _call(self, host, method, params, secret=None, timeout=5000):
-        params['format'] = params.get('format', 'json') # default to json
+        params['format'] = params.get('format', 'json')  # default to json
 
         if self.access_token:
             scheme = 'https'
@@ -662,30 +664,29 @@ class Connection(object):
             scheme = 'http'
             params['login'] = self.login
             params['apiKey'] = self.api_key
-            
-        
+
         if secret:
             params['signature'] = self._generateSignature(params, secret)
-        
+
         # force to utf8 to fix ascii codec errors
         encoded_params = []
-        for k,v in params.items():
+        for k, v in params.items():
             if isinstance(v, (list, tuple)):
                 v = [_utf8(e) for e in v]
             else:
                 v = _utf8(v)
-            encoded_params.append((k,v))
+            encoded_params.append((k, v))
         params = dict(encoded_params)
-        
+
         request = "%(scheme)s://%(host)s/%(method)s?%(params)s" % {
             'scheme': scheme,
             'host': host,
             'method': method,
             'params': urllib.urlencode(params, doseq=1)
-            }
+        }
 
         try:
-            http_response = bitly_http.get(request, timeout, user_agent = self.user_agent)
+            http_response = bitly_http.get(request, timeout, user_agent=self.user_agent)
             if http_response['http_status_code'] != 200:
                 raise BitlyError(500, http_response['result'])
             if not http_response['result'].startswith('{'):
