@@ -23,6 +23,24 @@ def get_connection():
     return bitly
 
 
+def testClicksByDay():
+    bitly = get_connection()
+    hsh = "UV5wy8"
+    data = bitly.clicks_by_day(hsh)
+    print data, len(data)
+    assert data is not None
+    assert len(data) == 1
+
+
+def testClicksBy30Day():
+    bitly = get_connection()
+    hsh = "UV5wy8"
+    data = bitly.clicks_by_day(hsh, days=30)
+    print data, len(data)
+    assert data is not None
+    assert len(data) == 1
+
+
 def testApi():
     bitly = get_connection()
     data = bitly.shorten('http://google.com/')
