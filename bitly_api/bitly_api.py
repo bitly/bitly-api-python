@@ -520,7 +520,7 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/bundle/link_reorder", params)
         return data
 
-    def bundle_collaborator_remove(self, bundle_link, collaborator):
+    def bundle_pending_collaborator_remove(self, bundle_link, collaborator):
         """remove a pending collaborator from a bundle"""
         params = dict(bundle_link=bundle_link)
         params["collaborator"] = collaborator
