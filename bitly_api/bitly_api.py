@@ -17,6 +17,26 @@ class BitlyError(Error):
     def __init__(self, code, message):
         Error.__init__(self,message)
         self.code = code
+        
+class ConnectionError(Error):
+	def __init__(self, code, message):
+		Error.__init__(self,message)
+		self.code = code
+
+class MissingArgumentError(Error):
+	def __init__(self, code, message):
+		Error.__init__(self,message)
+		self.code = code
+		
+class InvalidArgumentError(Error):
+	def __init__(self, code, message):
+		Error.__init__(self,message)
+		self.code = code
+		
+class HTTPResponseError(Error):
+	def __init__(self, code, message):
+		Error.__init__(self,message)
+		self.code = code
 
 def _utf8(s):
     if isinstance(s, unicode):
@@ -74,7 +94,7 @@ class Connection(object):
             shortUrl = link
 
         if not hash and not shortUrl:
-            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+            raise MissingArgumentError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
         if hash:
             params['hash'] = hash
@@ -88,7 +108,7 @@ class Connection(object):
         """ given a bitly url or hash, get statistics about the clicks on that link """
         warnings.warn("/v3/clicks is depricated in favor of /v3/link/clicks", DeprecationWarning)
         if not hash and not shortUrl:
-            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+            raise MissingArgumentError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
         if hash:
             params['hash'] = hash
@@ -103,7 +123,7 @@ class Connection(object):
         """ given a bitly url or hash, get statistics about the referrers of that link """
         warnings.warn("/v3/referrers is depricated in favor of /v3/link/referrers", DeprecationWarning)
         if not hash and not shortUrl:
-            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+            raise MissingArgumentError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
         if hash:
             params['hash'] = hash
@@ -119,7 +139,7 @@ class Connection(object):
         (most recent to least recent) """
         warnings.warn("/v3/clicks_by_day is depricated in favor of /v3/link/clicks?unit=day", DeprecationWarning)
         if not hash and not shortUrl:
-            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+            raise MissingArgumentError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
         if hash:
             params['hash'] = hash
@@ -135,7 +155,7 @@ class Connection(object):
         order (most recent to least recent)"""
         warnings.warn("/v3/clicks_by_minute is depricated in favor of /v3/link/clicks?unit=minute", DeprecationWarning)
         if not hash and not shortUrl:
-            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+            raise MissingArgumentError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
         if hash:
             params['hash'] = hash
@@ -284,7 +304,7 @@ class Connection(object):
             shortUrl = link
 
         if not hash and not shortUrl:
-            raise BitlyError(500, 'MISSING_ARG_SHORTURL')
+            raise MissingArgumentError(500, 'MISSING_ARG_SHORTURL')
         params = dict()
         if hash:
             params['hash'] = hash
@@ -314,10 +334,10 @@ class Connection(object):
         params = dict()
 
         if not link:
-            raise BitlyError(500, 'MISSING_ARG_LINK')
+            raise MissingArgumentError(500, 'MISSING_ARG_LINK')
         
         if not edit:
-            raise BitlyError(500, 'MISSING_ARG_EDIT')
+            raise MissingArgumentError(500, 'MISSING_ARG_EDIT')
 
 
         params['link'] = link
@@ -346,7 +366,7 @@ class Connection(object):
         """save a link into the user's history"""
         params = dict()
         if not longUrl and not long_url:
-            raise BitlyError('500', 'MISSING_ARG_LONG_URL')
+            raise MissingArgumentError(500, 'MISSING_ARG_LONG_URL')
         params['longUrl'] = longUrl or long_url
         if title is not None:
             params['title'] = str(title)
@@ -366,11 +386,11 @@ class Connection(object):
         end_point = 'v3/bitly_pro_domain'
 
         if not domain:
-            raise BitlyError(500, 'MISSING_ARG_DOMAIN')
+            raise MissingArgumentError(500, 'MISSING_ARG_DOMAIN')
 
         protocol_prefix = ('http://', 'https://')
         if domain.lower().startswith(protocol_prefix):
-            raise BitlyError(500, 'INVALID_BARE_DOMAIN')
+            raise InvalidArgumentError(500, 'INVALID_BARE_DOMAIN')
         params = dict(domain=domain)
         data = self._call(self.host, end_point, params, self.secret)
         return data['data']['bitly_pro_domain']
@@ -504,7 +524,7 @@ class Connection(object):
             else:
                 params["preview"] = "false"
         else:
-            raise BitlyError(500, "PARAM EDIT MUST HAVE VALUE TITLE OR PREVIEW") # all caps is fun!
+            raise InvalidArgumentError(500, "PARAM EDIT MUST HAVE VALUE TITLE OR PREVIEW") # all caps is fun!
         data = self._call_oauth2_metrics("v3/bundle/link_edit", params)
         return data
 
@@ -687,14 +707,14 @@ class Connection(object):
         try:
             http_response = bitly_http.get(request, timeout, user_agent = self.user_agent)
             if http_response['http_status_code'] != 200:
-                raise BitlyError(500, http_response['result'])
+                raise HTTPResponseError(500, http_response['result'])
             if not http_response['result'].startswith('{'):
-                raise BitlyError(500, http_response['result'])
+                raise HTTPResponseError(500, http_response['result'])
             data = json.loads(http_response['result'])
             if data.get('status_code', 500) != 200:
-                raise BitlyError(data.get('status_code', 500), data.get('status_txt', 'UNKNOWN_ERROR'))
+                raise HTTPResponseError(data.get('status_code', 500), data.get('status_txt', 'UNKNOWN_ERROR'))
             return data
-        except BitlyError:
+        except HTTPResponseError:
             raise
         except Exception:
             raise BitlyError(None, sys.exc_info()[1])
