@@ -150,6 +150,12 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/link/clicks", params, **kwargs)
         return data["link_clicks"]
 
+    def link_encoders(self, link, **kwargs):
+        """return the bitly encoders who have saved this link"""
+        params = dict(link=link)
+        data = self._call(self.host, 'v3/link/encoders', params, **kwargs)
+        return data['data']
+
     def link_encoders_count(self, link, **kwargs):
         """return the count of bitly encoders who have saved this link"""
         params = dict(link=link)
