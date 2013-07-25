@@ -1,5 +1,6 @@
 """
-This class is an abstracted http handler that uses multiple underlying http libraries 
+This class is an abstracted http handler that uses multiple underlying http
+libraries
 
 it will default to
 a) pycurl
@@ -15,10 +16,12 @@ except ImportError:
 import urllib2
 import cStringIO
 
+
 class DontRedirect(urllib2.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         if code in (301, 302, 303, 307):
             raise urllib2.HTTPError(req.get_full_url(), code, msg, headers, fp)
+
 
 def makeUrllib2Http(url, user_agent):
     dont_redirect = DontRedirect()
@@ -35,6 +38,7 @@ def makeUrllib2Http(url, user_agent):
         code = e.code
         data = e.read()
     return code, data
+
 
 def makePycurlHttp(url, timeout, user_agent):
     try:
@@ -64,9 +68,10 @@ def makePycurlHttp(url, timeout, user_agent):
         raise
     return http_status_code, result
 
+
 def get(url, timeout, user_agent):
     if PYCURL:
         code, result = makePycurlHttp(url, timeout, user_agent)
     else:
         code, result = makeUrllib2Http(url, user_agent)
-    return {'http_status_code':code, 'result':result}
+    return {'http_status_code': code, 'result': result}

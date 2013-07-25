@@ -5,5 +5,6 @@ __all__ = ["Connection", "BitlyError", "Error"]
 __doc__ = """
 This is a python library for the bitly api
 
-all methods raise BitlyError on an unexpected response, or a problem with input format
+all methods raise BitlyError on an unexpected response, or a problem with input
+format
 """
