@@ -242,7 +242,7 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/user/info", dict(), **kwargs)
         return data
 
-    def user_link_history(self, created_before=None, created_after=None, archived=None, limit=None, offset=None):
+    def user_link_history(self, created_before=None, created_after=None, archived=None, limit=None, offset=None, private=None):
         params = dict()
         if created_before is not None:
             assert isinstance(limit, int)
@@ -251,8 +251,15 @@ class Connection(object):
             assert isinstance(limit, int)
             params["created_after"] = created_after
         if archived is not None:
-            assert isinstance(archived, bool)
-            params["archived"] = "true" if archived else "false"
+            assert isinstance(archived, str)
+            archived = archived.lower()
+            assert archived is "on" or "off" or "both"
+            params["archived"] = archived
+        if private is not None:
+            assert isinstance(private, str)
+            private = private.lower()
+            assert private is "on" or "off" or "both"
+            params["private"] = private
         if limit is not None:
             assert isinstance(limit, int)
             params["limit"] = str(limit)
