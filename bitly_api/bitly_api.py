@@ -28,6 +28,23 @@ def _utf8(s):
     return s
 
 
+def _utf8_params(params):
+    """encode a dictionary of URL parameters (including iterables) as utf-8"""
+    assert isinstance(params, dict)
+    encoded_params = []
+    for k, v in params.items():
+        if v is None:
+            continue
+        if isinstance(v, (int, long, float)):
+            v = str(v)
+        if isinstance(v, (list, tuple)):
+            v = [_utf8(x) for x in v]
+        else:
+            v = _utf8(v)
+        encoded_params.append((k, v))
+    return dict(encoded_params)
+
+
 class Connection(object):
     """
     This is a python library for accessing the bitly api
@@ -745,14 +762,7 @@ class Connection(object):
             params['signature'] = self._generateSignature(params, secret)
 
         # force to utf8 to fix ascii codec errors
-        encoded_params = []
-        for k, v in params.items():
-            if isinstance(v, (list, tuple)):
-                v = [_utf8(e) for e in v]
-            else:
-                v = _utf8(v)
-            encoded_params.append((k, v))
-        params = dict(encoded_params)
+        params = _utf8_params(params)
 
         request = "%(scheme)s://%(host)s/%(method)s?%(params)s" % {
             'scheme': scheme,
