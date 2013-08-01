@@ -1,5 +1,5 @@
 from bitly_api import Connection, BitlyError, Error
-__version__ = '0.2'
+__version__ = '0.3'
 __author__ = "Jehiah Czebotar <jehiah@gmail.com>"
 __all__ = ["Connection", "BitlyError", "Error"]
 __doc__ = """
