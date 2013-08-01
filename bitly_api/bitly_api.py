@@ -717,7 +717,8 @@ class Connection(object):
         return signature
 
     def _call_oauth2_metrics(self, endpoint, params, unit=None, units=None,
-                             tz_offset=None, rollup=None, limit=None):
+                             tz_offset=None, rollup=None, limit=None,
+                             unit_reference_ts=None):
         if unit is not None:
             assert unit in ("minute", "hour", "day", "week", "mweek", "month")
             params["unit"] = unit
@@ -738,7 +739,11 @@ class Connection(object):
             params["rollup"] = "true" if rollup else "false"
         if limit is not None:
             assert isinstance(limit, int)
-            params["limit"] = str(limit)
+            params["limit"] = limit
+        if unit_reference_ts is not None:
+            assert (unit_reference_ts == 'now' or
+                    isinstance(unit_reference_ts, (int, long)))
+            params["unit_reference_ts"] = unit_reference_ts
 
         return self._call_oauth2(endpoint, params)
 
