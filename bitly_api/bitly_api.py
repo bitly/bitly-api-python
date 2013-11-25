@@ -1,14 +1,33 @@
-import bitly_http
 import hashlib
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import json
 import sys
 import time
 import types
-import urllib
 import warnings
+
+try:
+    from urllib.request import build_opener, HTTPRedirectHandler
+    from urllib.parse import urlencode
+    from urllib.error import URLError, HTTPError
+    string_types = str,
+    integer_types = int,
+    numeric_types = (int, float)
+    text_type = str
+    binary_type = bytes
+except ImportError as e:
+    from urllib2 import build_opener, HTTPRedirectHandler, URLError, HTTPError
+    from urllib import urlencode
+    string_types = basestring,
+    integer_types = (int, long)
+    numeric_types = (int, long, float)
+    text_type = unicode
+    binary_type = str
+
+
+class DontRedirect(HTTPRedirectHandler):
+    def redirect_response(self, req, fp, code, msg, headers, newurl):
+        if code in (301, 302, 303, 307):
+            raise HTTPError(req.get_full_url(), code, msg, headers, fp)
 
 
 class Error(Exception):
@@ -22,9 +41,9 @@ class BitlyError(Error):
 
 
 def _utf8(s):
-    if isinstance(s, unicode):
+    if isinstance(s, text_type):
         s = s.encode('utf-8')
-    assert isinstance(s, str)
+    assert isinstance(s, binary_type)
     return s
 
 
@@ -35,7 +54,7 @@ def _utf8_params(params):
     for k, v in params.items():
         if v is None:
             continue
-        if isinstance(v, (int, long, float)):
+        if isinstance(v, numeric_types):
             v = str(v)
         if isinstance(v, (list, tuple)):
             v = [_utf8(x) for x in v]
@@ -314,26 +333,26 @@ class Connection(object):
                           private=None):
         params = dict()
         if created_before is not None:
-            assert isinstance(limit, int)
+            assert isinstance(limit, integer_types)
             params["created_before"] = created_before
         if created_after is not None:
-            assert isinstance(limit, int)
+            assert isinstance(limit, integer_types)
             params["created_after"] = created_after
         if archived is not None:
-            assert isinstance(archived, str)
+            assert isinstance(archived, string_types)
             archived = archived.lower()
             assert archived is "on" or "off" or "both"
             params["archived"] = archived
         if private is not None:
-            assert isinstance(private, str)
+            assert isinstance(private, string_types)
             private = private.lower()
             assert private is "on" or "off" or "both"
             params["private"] = private
         if limit is not None:
-            assert isinstance(limit, int)
+            assert isinstance(limit, integer_types)
             params["limit"] = str(limit)
         if offset is not None:
-            assert isinstance(offset, int)
+            assert isinstance(offset, integer_types)
             params["offset"] = str(offset)
         data = self._call_oauth2("v3/user/link_history", params)
         return data["link_history"]
@@ -346,10 +365,10 @@ class Connection(object):
         if expand_user is True:
             params["expand_user"] = "true"
         if offset is not None:
-            assert isinstance(offset, int)
+            assert isinstance(offset, integer_types)
             params["offset"] = str(offset)
         if limit is not None:
-            assert isinstance(limit, int)
+            assert isinstance(limit, integer_types)
             params["limit"] = str(limit)
         data = self._call_oauth2("v3/user/network_history", params)
         return data
@@ -508,10 +527,10 @@ class Connection(object):
         if private:
             params["private"] = "true"
         if title is not None:
-            assert isinstance(title, str)
+            assert isinstance(title, string_types)
             params["title"] = title
         if description is not None:
-            assert isinstance(description, str)
+            assert isinstance(description, string_types)
             params["description"] = description
         data = self._call_oauth2_metrics("v3/bundle/create", params)
         return data
@@ -521,13 +540,13 @@ class Connection(object):
         """edit a bundle for the authenticated user"""
         params = dict(bundle_link=bundle_link)
         if edit:
-            assert isinstance(edit, str)
+            assert isinstance(edit, string_types)
             params["edit"] = edit
         if title:
-            assert isinstance(title, str)
+            assert isinstance(title, string_types)
             params["title"] = title
         if description:
-            assert isinstance(description, str)
+            assert isinstance(description, string_types)
             params["description"] = description
         if private is not None:
             if private:
@@ -540,7 +559,7 @@ class Connection(object):
             else:
                 params["preview"] = "false"
         if og_image:
-            assert isinstance(og_image, str)
+            assert isinstance(og_image, string_types)
             params["og_image"] = og_image
         data = self._call_oauth2_metrics("v3/bundle/edit", params)
         return data
@@ -549,7 +568,7 @@ class Connection(object):
         """add a link to a bundle"""
         params = dict(bundle_link=bundle_link, link=link)
         if title:
-            assert isinstance(title, str)
+            assert isinstance(title, string_types)
             params["title"] = title
         data = self._call_oauth2_metrics("v3/bundle/link_add", params)
         return data
@@ -581,7 +600,7 @@ class Connection(object):
         params = dict(bundle_link=bundle_link, link=link)
         if edit == "title":
             params["edit"] = edit
-            assert isinstance(title, str)
+            assert isinstance(title, string_types)
             params["title"] = title
         elif edit == "preview":
             params["edit"] = edit
@@ -681,16 +700,16 @@ class Connection(object):
                limit=10, lang='en'):
         params = dict(query=query, lang=lang)
         if offset:
-            assert isinstance(offset, int)
+            assert isinstance(offset, integer_types)
             params["offset"] = str(offset)
         if cities:  # TODO: check format
-            assert isinstance(cities, str)
+            assert isinstance(cities, string_types)
             params["cities"] = cities
         if domain:
-            assert isinstance(domain, str)
+            assert isinstance(domain, string_types)
             params["domain"] = domain
         if fields:
-            assert isinstance(fields, str)
+            assert isinstance(fields, string_types)
             params["fields"] = fields
         data = self._call_oauth2_metrics("v3/search", params, limit=limit)
         return data['results']
@@ -723,26 +742,27 @@ class Connection(object):
             assert unit in ("minute", "hour", "day", "week", "mweek", "month")
             params["unit"] = unit
         if units is not None:
-            assert isinstance(units, int), "Unit (%r) must be integer" % units
+            assert isinstance(units, integer_types), \
+                "Unit (%r) must be integer" % units
             params["units"] = units
         if tz_offset is not None:
             # tz_offset can either be a hour offset, or a timezone like
             # North_America/New_York
-            if isinstance(tz_offset, int):
+            if isinstance(tz_offset, integer_types):
                 msg = "integer tz_offset must be between -12 and 12"
                 assert -12 <= tz_offset <= 12, msg
             else:
-                assert isinstance(tz_offset, (str, unicode))
+                assert isinstance(tz_offset, string_types)
             params["tz_offset"] = tz_offset
         if rollup is not None:
             assert isinstance(rollup, bool)
             params["rollup"] = "true" if rollup else "false"
         if limit is not None:
-            assert isinstance(limit, int)
+            assert isinstance(limit, integer_types)
             params["limit"] = limit
         if unit_reference_ts is not None:
             assert (unit_reference_ts == 'now' or
-                    isinstance(unit_reference_ts, (int, long)))
+                    isinstance(unit_reference_ts, integer_types))
             params["unit_reference_ts"] = unit_reference_ts
 
         return self._call_oauth2(endpoint, params)
@@ -773,21 +793,28 @@ class Connection(object):
             'scheme': scheme,
             'host': host,
             'method': method,
-            'params': urllib.urlencode(params, doseq=1)
+            'params': urlencode(params, doseq=1)
             }
 
         try:
-            http_response = bitly_http.get(request, timeout,
-                                           user_agent=self.user_agent)
-            if http_response['http_status_code'] != 200:
-                raise BitlyError(500, http_response['result'])
-            if not http_response['result'].startswith('{'):
-                raise BitlyError(500, http_response['result'])
-            data = json.loads(http_response['result'])
+            opener = build_opener(DontRedirect())
+            opener.addheaders = [('User-agent', self.user_agent + ' urllib')]
+            response = opener.open(request)
+            code = response.code
+            result = response.read().decode('utf-8')
+            if code != 200:
+                raise BitlyError(500, result)
+            if not result.startswith('{'):
+                raise BitlyError(500, result)
+            data = json.loads(result)
             if data.get('status_code', 500) != 200:
                 raise BitlyError(data.get('status_code', 500),
                                  data.get('status_txt', 'UNKNOWN_ERROR'))
             return data
+        except URLError as e:
+            raise BitlyError(500, str(e))
+        except HTTPError as e:
+            raise BitlyError(e.code, e.read())
         except BitlyError:
             raise
         except Exception:

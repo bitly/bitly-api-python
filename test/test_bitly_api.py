@@ -60,5 +60,12 @@ def testProDomain():
         try:
             result = bitly.pro_domain(domain)
             assert result == test_data[domain], domain
-        except bitly_api.BitlyError, e:
+        except bitly_api.BitlyError as e:
             assert str(e) == test_data[domain]
+
+
+def testUserInfo():
+    bitly = get_connection()
+    data = bitly.user_info()
+    assert data is not None
+    assert 'login' in data
