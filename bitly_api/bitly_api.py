@@ -306,7 +306,7 @@ class Connection(object):
 
     def user_info(self, **kwargs):
         """return or update info about a user"""
-        data = self._call_oauth2_metrics("v3/user/info", dict(), **kwargs)
+        data = self._call_oauth2("v3/user/info", kwargs)
         return data
 
     def user_link_history(self, created_before=None, created_after=None,
