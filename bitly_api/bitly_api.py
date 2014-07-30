@@ -305,7 +305,7 @@ class Connection(object):
     def user_shorten_counts(self, **kwargs):
         data = self._call_oauth2_metrics("v3/user/shorten_counts", dict(),
                                          **kwargs)
-        return data["shorten_counts"]
+        return data["user_shorten_counts"]
 
     def user_tracking_domain_list(self):
         data = self._call_oauth2("v3/user/tracking_domain_list", dict())
