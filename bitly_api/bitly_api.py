@@ -714,6 +714,16 @@ class Connection(object):
         data = self._call_oauth2_metrics("v3/search", params, limit=limit)
         return data['results']
 
+    def custom_keyword(self, keyword_link, target_link, overwrite=False):
+        """ Save a Custom Bitlink for a custom short domain.
+        @parameter keyword_link: the Custom Bitlink (short domain and keyword combination) to set
+        @parameter target_link: the Bitlink the specified keyword will map to (as returned from /v3/shorten)
+        @parameter overwrite: Optional. true|false. Overwrite existing entry if one exists. Default: false.
+        """
+        params = dict(keyword_link=keyword_link, target_link=target_link, overwrite=overwrite)
+        data = self._call(self.host, 'v3/user/save_custom_domain_keyword', params, self.secret)
+        return data['data']
+
     @classmethod
     def _generateSignature(self, params, secret):
         if not params or not secret:
