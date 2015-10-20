@@ -5,6 +5,15 @@ bitly API python library
 
     pip install bitly_api
 
+## Usage
+
+    import bitly_api
+    c = bitly_api.Connection('bitlyapidemo','R_{{apikey}}')
+    # or to use oauth2 endpoints
+    c = bitly_api.Connection(access_token='...')
+    c.shorten('http://www.google.com/')
+
+
 ## Run tests
 
 Your username is the lowercase name shown when you login to bitly, your access token can be fetched using the following ( http://dev.bitly.com/authentication.html ):
