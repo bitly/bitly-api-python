@@ -1,5 +1,8 @@
 import hashlib
-import json
+try:
+    import json
+except:
+    import simplejson as json
 import sys
 import time
 import types
