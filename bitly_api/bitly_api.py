@@ -346,7 +346,7 @@ class Connection(object):
         if private is not None:
             assert isinstance(private, string_types)
             private = private.lower()
-            assert private is "on" or "off" or "both"
+            assert private == "on" or "off" or "both"
             params["private"] = private
         if limit is not None:
             assert isinstance(limit, integer_types)
