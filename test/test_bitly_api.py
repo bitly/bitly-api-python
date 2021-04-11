@@ -8,6 +8,8 @@ or 'export' the two environment variables prior to running nosetests
 """
 import os
 import sys
+import random
+import string
 sys.path.append('../')
 import bitly_api
 
@@ -69,3 +71,16 @@ def testUserInfo():
     data = bitly.user_info()
     assert data is not None
     assert 'login' in data
+
+def testCustomKeyword():
+    bitly = get_connection()
+    data = bitly.shorten('http://google.com/')
+    short_url = data.get("url")
+
+    random_string = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
+    custom_url = 'http://bit.ly/Custom%s' % random_string
+
+    new_data = bitly.custom_keyword(custom_url, short_url)
+    assert new_data is not None
+    assert new_data['target_link'] == 'http://google.com/'
+    assert new_data['keyword_link'] == custom_url
