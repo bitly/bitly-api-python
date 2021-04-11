@@ -213,7 +213,13 @@ class Connection(object):
         data = self._call(self.host, 'v3/link/encoders_count', params,
                           **kwargs)
         return data['data']
-
+    
+    def link_encoders_by_count(self,link,**kwargs):
+        """return the ecoders along the click counts"""
+        params=dict(link=link)
+        data = self._call(self.host,'v3/link/encoders_by_count',params,**kwargs)
+        return data['data']
+    
     def link_referring_domains(self, link, **kwargs):
         """
         returns the domains that are referring traffic to a single bitly link
@@ -323,9 +329,17 @@ class Connection(object):
             "v3/user/tracking_domain_shorten_counts", params, **kwargs)
         return data["tracking_domain_shorten_counts"]
 
-    def user_info(self, **kwargs):
+    def user_info(self, login=None,full_name=None,**kwargs):
         """return or update info about a user"""
-        data = self._call_oauth2("v3/user/info", kwargs)
+        data=None
+        if login is not None and full_name is not None:
+            data = self._call_oauth2_metrics("v3/user/info", dict(login=login,full_name=full_name), **kwargs)
+        elif login is not None:
+            data = self._call_oauth2_metrics("v3/user/info", dict(login=login), **kwargs)
+        elif full_name is not None:
+            data = self._call_oauth2_metrics("v3/user/info", dict(full_name=full_name), **kwargs)
+        else:
+            data = self._call_oauth2_metrics("v3/user/info", dict(), **kwargs)
         return data
 
     def user_link_history(self, created_before=None, created_after=None,
